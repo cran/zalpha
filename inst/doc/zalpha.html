@@ -14,13 +14,29 @@
 
 <title>zalpha</title>
 
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
 
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css" data-origin="pandoc">
-a.sourceLine { display: inline-block; line-height: 1.25; }
-a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
-a.sourceLine:empty { height: 1.2em; }
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode { white-space: pre; position: relative; }
 div.sourceCode { margin: 1em 0; }
@@ -30,14 +46,16 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 code.sourceCode { white-space: pre-wrap; }
-a.sourceLine { text-indent: -1em; padding-left: 1em; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
-pre.numberSource a.sourceLine
-  { position: relative; left: -4em; }
-pre.numberSource a.sourceLine::before
-  { content: attr(title);
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
     position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; pointer-events: all; display: inline-block;
+    border: none; display: inline-block;
     -webkit-touch-callout: none; -webkit-user-select: none;
     -khtml-user-select: none; -moz-user-select: none;
     -ms-user-select: none; user-select: none;
@@ -46,9 +64,9 @@ pre.numberSource a.sourceLine::before
   }
 pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
 div.sourceCode
-  {  }
+  {   }
 @media screen {
-a.sourceLine::before { text-decoration: underline; }
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
@@ -301,213 +319,473 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<p>The zalpha package contains statistics for identifying areas of the genome that have undergone a selective sweep. The idea behind these statistics is to find areas of the genome that are highly correlated, as this can be a sign that a sweep has occurred recently in the vicinity. For more information on the statistics, please see the paper by Jacobs et al. (2016) referenced below.</p>
-<div id="data" class="section level2">
-<h2>Data</h2>
-<p>The data used in this vignette is a very small simple dataset containing 20 SNPs and a population of 10 chromosomes. Realistically, the dataset would be much bigger. It is highly recommended to use only SNPs with a minor allele frequency of over 5%, as it is hard to find correlations between rare alleles.</p>
-<p>The dataset “snps” is included with this package and can be loaded using the code:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">library</span>(zalpha)</a>
-<a class="sourceLine" id="cb1-2" title="2"><span class="kw">data</span>(snps)</a>
-<a class="sourceLine" id="cb1-3" title="3"><span class="co">## This is what the dataset looks like:</span></a>
-<a class="sourceLine" id="cb1-4" title="4">snps</a>
-<a class="sourceLine" id="cb1-5" title="5"><span class="co">#&gt;    positions distances chrom_1 chrom_2 chrom_3 chrom_4 chrom_5 chrom_6 chrom_7</span></a>
-<a class="sourceLine" id="cb1-6" title="6"><span class="co">#&gt; 1        100    0.0001       1       0       0       1       1       1       0</span></a>
-<a class="sourceLine" id="cb1-7" title="7"><span class="co">#&gt; 2        200    0.0002       1       1       1       0       0       0       1</span></a>
-<a class="sourceLine" id="cb1-8" title="8"><span class="co">#&gt; 3        300    0.0005       1       1       1       1       1       1       1</span></a>
-<a class="sourceLine" id="cb1-9" title="9"><span class="co">#&gt; 4        400    0.0008       0       0       1       1       1       0       1</span></a>
-<a class="sourceLine" id="cb1-10" title="10"><span class="co">#&gt; 5        500    0.0010       1       1       1       1       0       1       0</span></a>
-<a class="sourceLine" id="cb1-11" title="11"><span class="co">#&gt; 6        600    0.0015       1       0       0       1       1       0       1</span></a>
-<a class="sourceLine" id="cb1-12" title="12"><span class="co">#&gt; 7        700    0.0017       1       0       0       1       1       1       1</span></a>
-<a class="sourceLine" id="cb1-13" title="13"><span class="co">#&gt; 8        800    0.0019       0       0       0       0       1       1       1</span></a>
-<a class="sourceLine" id="cb1-14" title="14"><span class="co">#&gt; 9        900    0.0023       1       1       0       0       1       1       0</span></a>
-<a class="sourceLine" id="cb1-15" title="15"><span class="co">#&gt; 10      1000    0.0024       0       0       1       1       0       0       1</span></a>
-<a class="sourceLine" id="cb1-16" title="16"><span class="co">#&gt; 11      1100    0.0026       1       0       1       0       0       0       0</span></a>
-<a class="sourceLine" id="cb1-17" title="17"><span class="co">#&gt; 12      1200    0.0027       1       0       1       0       1       0       0</span></a>
-<a class="sourceLine" id="cb1-18" title="18"><span class="co">#&gt; 13      1300    0.0032       1       1       1       1       0       0       1</span></a>
-<a class="sourceLine" id="cb1-19" title="19"><span class="co">#&gt; 14      1400    0.0037       1       0       1       0       1       0       0</span></a>
-<a class="sourceLine" id="cb1-20" title="20"><span class="co">#&gt; 15      1500    0.0039       0       0       1       0       1       0       0</span></a>
-<a class="sourceLine" id="cb1-21" title="21"><span class="co">#&gt; 16      1600    0.0040       1       0       0       0       0       1       1</span></a>
-<a class="sourceLine" id="cb1-22" title="22"><span class="co">#&gt; 17      1700    0.0041       0       0       0       1       0       1       1</span></a>
-<a class="sourceLine" id="cb1-23" title="23"><span class="co">#&gt; 18      1800    0.0045       1       0       1       0       0       0       1</span></a>
-<a class="sourceLine" id="cb1-24" title="24"><span class="co">#&gt; 19      1900    0.0048       1       0       0       1       1       1       0</span></a>
-<a class="sourceLine" id="cb1-25" title="25"><span class="co">#&gt; 20      2000    0.0049       0       1       1       0       0       1       1</span></a>
-<a class="sourceLine" id="cb1-26" title="26"><span class="co">#&gt;    chrom_8 chrom_9 chrom_10</span></a>
-<a class="sourceLine" id="cb1-27" title="27"><span class="co">#&gt; 1        0       0        0</span></a>
-<a class="sourceLine" id="cb1-28" title="28"><span class="co">#&gt; 2        0       1        0</span></a>
-<a class="sourceLine" id="cb1-29" title="29"><span class="co">#&gt; 3        1       0        1</span></a>
-<a class="sourceLine" id="cb1-30" title="30"><span class="co">#&gt; 4        1       0        0</span></a>
-<a class="sourceLine" id="cb1-31" title="31"><span class="co">#&gt; 5        0       1        0</span></a>
-<a class="sourceLine" id="cb1-32" title="32"><span class="co">#&gt; 6        0       0        1</span></a>
-<a class="sourceLine" id="cb1-33" title="33"><span class="co">#&gt; 7        1       1        0</span></a>
-<a class="sourceLine" id="cb1-34" title="34"><span class="co">#&gt; 8        1       0        1</span></a>
-<a class="sourceLine" id="cb1-35" title="35"><span class="co">#&gt; 9        0       1        1</span></a>
-<a class="sourceLine" id="cb1-36" title="36"><span class="co">#&gt; 10       1       1        1</span></a>
-<a class="sourceLine" id="cb1-37" title="37"><span class="co">#&gt; 11       0       1        0</span></a>
-<a class="sourceLine" id="cb1-38" title="38"><span class="co">#&gt; 12       1       1        1</span></a>
-<a class="sourceLine" id="cb1-39" title="39"><span class="co">#&gt; 13       1       1        0</span></a>
-<a class="sourceLine" id="cb1-40" title="40"><span class="co">#&gt; 14       1       0        1</span></a>
-<a class="sourceLine" id="cb1-41" title="41"><span class="co">#&gt; 15       1       1        0</span></a>
-<a class="sourceLine" id="cb1-42" title="42"><span class="co">#&gt; 16       1       0        1</span></a>
-<a class="sourceLine" id="cb1-43" title="43"><span class="co">#&gt; 17       1       0        1</span></a>
-<a class="sourceLine" id="cb1-44" title="44"><span class="co">#&gt; 18       1       1        0</span></a>
-<a class="sourceLine" id="cb1-45" title="45"><span class="co">#&gt; 19       0       0        1</span></a>
-<a class="sourceLine" id="cb1-46" title="46"><span class="co">#&gt; 20       0       0        1</span></a></code></pre></div>
-<p>This data set contains information about each of the SNPs. The first column gives the physical location of the SNP along the chromosome, in whatever units is useful to the user (usually bp or Kb). In this example, the positions are assumed to be in base pairs (bp).</p>
-<p>The next column is the genetic distance of the SNP from the start of the chromosome. This could be in centimorgans (cM), linkage disequilibrium units (LDU) or any other way of measuring genetic distance, as long as it is additive (i.e. the distance between SNP A and SNP C is equal to the distance between SNP A and SNP B plus SNP B and SNP C). This data is only required if the user is interested in adjusting for recombination and supplies an LDprofile.</p>
-<p>The final columns are the SNP alleles for each of the chromosomes in the population. Each SNP must be biallelic, but can contain any value, for example 0s and 1s, or A/G/C/Ts.</p>
+<p>The zalpha package contains statistics for identifying areas of the genome that have undergone a selective sweep. The idea behind these statistics is to find areas of the genome that are highly correlated, as this can be a sign that a sweep has occurred recently in the vicinity. For more information on the statistics, please see the paper by Jacobs et al. (2016)[1] referenced below.</p>
+<div id="a-simple-example" class="section level2">
+<h2>A simple example</h2>
+<p>Here we have a dataset containing five humans with a single pair of chromosomes each. The chromosome has 20 SNPs, at base pair 100, 200, 300, …, 2000.</p>
+<table>
+<tbody>
+<tr class="odd">
+<td>Person 1</td>
+<td>Chromosome A</td>
+<td>AGGAAGGGATACGGTTATAC</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Chromosome B</td>
+<td>CGGAACTGATCAGCTCAGGG</td>
+</tr>
+<tr class="odd">
+<td>Person 2</td>
+<td>Chromosome A</td>
+<td>CGGTACTGTCACGGGCATGG</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Chromosome B</td>
+<td>ATGTAGGGTCCAGCTCTGAC</td>
+</tr>
+<tr class="odd">
+<td>Person 3</td>
+<td>Chromosome A</td>
+<td>ATGTCGGCATCCAGGCAGAC</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Chromosome B</td>
+<td>ATGAACGCATCAACTTTGAG</td>
+</tr>
+<tr class="odd">
+<td>Person 4</td>
+<td>Chromosome A</td>
+<td>CGGTCGGCTCCAGCTTTTGG</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Chromosome B</td>
+<td>CTGTCCGCTCCCGGGTTTGC</td>
+</tr>
+<tr class="odd">
+<td>Person 5</td>
+<td>Chromosome A</td>
+<td>CGCAACGGACACGCGCATGC</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Chromosome B</td>
+<td>CTGACGTCACCCAGTTTGAG</td>
+</tr>
+</tbody>
+</table>
+<p>For this simple example all that is needed is:</p>
+<ul>
+<li><p>The vector of SNP locations</p></li>
+<li><p>The matrix of SNP values. This could be in ACGT format as above, or in 0 and 1 notation, or any other notation as long as SNPs are biallelic. Data extracted from a PLINK .tped file is in the ideal format for this analysis.</p></li>
+</ul>
+<div id="the-snps-dataset" class="section level3">
+<h3>The snps dataset</h3>
+<p>The snps dataset is a data frame that comes with the zalpha package. It is identical to the simple example above, but with 0s and 1s instead of ACGTs.</p>
+<p>Realistically, the dataset would be much bigger. It is highly recommended to only use SNPs with a minor allele frequency of over 5%, as it is hard to find correlations between rare alleles. Any missing values should be coded as NA.</p>
+<p>The snps dataset can be loaded using the code:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(zalpha)</span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">data</span>(snps)</span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="co">## This is what the dataset looks like:</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a>snps</span>
+<span id="cb1-5"><a href="#cb1-5"></a><span class="co">#&gt;    bp_positions cM_distances chrom_1 chrom_2 chrom_3 chrom_4 chrom_5 chrom_6</span></span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="co">#&gt; 1           100       0.0001       1       0       0       1       1       1</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="co">#&gt; 2           200       0.0002       1       1       1       0       0       0</span></span>
+<span id="cb1-8"><a href="#cb1-8"></a><span class="co">#&gt; 3           300       0.0005       1       1       1       1       1       1</span></span>
+<span id="cb1-9"><a href="#cb1-9"></a><span class="co">#&gt; 4           400       0.0008       0       0       1       1       1       0</span></span>
+<span id="cb1-10"><a href="#cb1-10"></a><span class="co">#&gt; 5           500       0.0010       1       1       1       1       0       1</span></span>
+<span id="cb1-11"><a href="#cb1-11"></a><span class="co">#&gt; 6           600       0.0015       1       0       0       1       1       0</span></span>
+<span id="cb1-12"><a href="#cb1-12"></a><span class="co">#&gt; 7           700       0.0017       1       0       0       1       1       1</span></span>
+<span id="cb1-13"><a href="#cb1-13"></a><span class="co">#&gt; 8           800       0.0019       0       0       0       0       1       1</span></span>
+<span id="cb1-14"><a href="#cb1-14"></a><span class="co">#&gt; 9           900       0.0023       1       1       0       0       1       1</span></span>
+<span id="cb1-15"><a href="#cb1-15"></a><span class="co">#&gt; 10         1000       0.0024       0       0       1       1       0       0</span></span>
+<span id="cb1-16"><a href="#cb1-16"></a><span class="co">#&gt; 11         1100       0.0026       1       0       1       0       0       0</span></span>
+<span id="cb1-17"><a href="#cb1-17"></a><span class="co">#&gt; 12         1200       0.0027       1       0       1       0       1       0</span></span>
+<span id="cb1-18"><a href="#cb1-18"></a><span class="co">#&gt; 13         1300       0.0032       1       1       1       1       0       0</span></span>
+<span id="cb1-19"><a href="#cb1-19"></a><span class="co">#&gt; 14         1400       0.0037       1       0       1       0       1       0</span></span>
+<span id="cb1-20"><a href="#cb1-20"></a><span class="co">#&gt; 15         1500       0.0039       0       0       1       0       1       0</span></span>
+<span id="cb1-21"><a href="#cb1-21"></a><span class="co">#&gt; 16         1600       0.0040       1       0       0       0       0       1</span></span>
+<span id="cb1-22"><a href="#cb1-22"></a><span class="co">#&gt; 17         1700       0.0041       0       0       0       1       0       1</span></span>
+<span id="cb1-23"><a href="#cb1-23"></a><span class="co">#&gt; 18         1800       0.0045       1       0       1       0       0       0</span></span>
+<span id="cb1-24"><a href="#cb1-24"></a><span class="co">#&gt; 19         1900       0.0048       1       0       0       1       1       1</span></span>
+<span id="cb1-25"><a href="#cb1-25"></a><span class="co">#&gt; 20         2000       0.0049       0       1       1       0       0       1</span></span>
+<span id="cb1-26"><a href="#cb1-26"></a><span class="co">#&gt;    chrom_7 chrom_8 chrom_9 chrom_10</span></span>
+<span id="cb1-27"><a href="#cb1-27"></a><span class="co">#&gt; 1        0       0       0        0</span></span>
+<span id="cb1-28"><a href="#cb1-28"></a><span class="co">#&gt; 2        1       0       1        0</span></span>
+<span id="cb1-29"><a href="#cb1-29"></a><span class="co">#&gt; 3        1       1       0        1</span></span>
+<span id="cb1-30"><a href="#cb1-30"></a><span class="co">#&gt; 4        1       1       0        0</span></span>
+<span id="cb1-31"><a href="#cb1-31"></a><span class="co">#&gt; 5        0       0       1        0</span></span>
+<span id="cb1-32"><a href="#cb1-32"></a><span class="co">#&gt; 6        1       0       0        1</span></span>
+<span id="cb1-33"><a href="#cb1-33"></a><span class="co">#&gt; 7        1       1       1        0</span></span>
+<span id="cb1-34"><a href="#cb1-34"></a><span class="co">#&gt; 8        1       1       0        1</span></span>
+<span id="cb1-35"><a href="#cb1-35"></a><span class="co">#&gt; 9        0       0       1        1</span></span>
+<span id="cb1-36"><a href="#cb1-36"></a><span class="co">#&gt; 10       1       1       1        1</span></span>
+<span id="cb1-37"><a href="#cb1-37"></a><span class="co">#&gt; 11       0       0       1        0</span></span>
+<span id="cb1-38"><a href="#cb1-38"></a><span class="co">#&gt; 12       0       1       1        1</span></span>
+<span id="cb1-39"><a href="#cb1-39"></a><span class="co">#&gt; 13       1       1       1        0</span></span>
+<span id="cb1-40"><a href="#cb1-40"></a><span class="co">#&gt; 14       0       1       0        1</span></span>
+<span id="cb1-41"><a href="#cb1-41"></a><span class="co">#&gt; 15       0       1       1        0</span></span>
+<span id="cb1-42"><a href="#cb1-42"></a><span class="co">#&gt; 16       1       1       0        1</span></span>
+<span id="cb1-43"><a href="#cb1-43"></a><span class="co">#&gt; 17       1       1       0        1</span></span>
+<span id="cb1-44"><a href="#cb1-44"></a><span class="co">#&gt; 18       1       1       1        0</span></span>
+<span id="cb1-45"><a href="#cb1-45"></a><span class="co">#&gt; 19       0       0       0        1</span></span>
+<span id="cb1-46"><a href="#cb1-46"></a><span class="co">#&gt; 20       1       0       0        1</span></span></code></pre></div>
+<p>This data set contains information about each of the SNPs. The first column gives the physical location of the SNP along the chromosome, in whatever units is useful to the user (usually bp or Kb). In this example, the positions are in base pairs (bp).</p>
+<p>The next column is the genetic distance of the SNP from the start of the chromosome. Ignore this column for now.</p>
+<p>The final columns are the SNP alleles for each of the chromosomes in the population. Each SNP must be biallelic, but can contain any value, for example 0s and 1s, or ACGTs. The data can contain missing values, however it is recommended that the cut off is 10% missing at most. Missing values should be coded as NA. It is also recommended to use a minor allele frequency of 5% or higher.</p>
+<p><strong>Note:</strong> There is no requirement to put data into a data frame - all that is required is a vector of SNP positions and a matrix of SNP values.</p>
+</div>
 </div>
 <div id="zalpha" class="section level2">
 <h2>Zalpha</h2>
-<p>To test for selection, the user can use the Zalpha function. This function takes each SNP in the dataset, the “target locus”, calculates the <span class="math inline">\(Z_{\alpha}\)</span> value, then moves on to the next SNP. It works by calculating correlations between alleles on each side of the target locus and averaging them. To do this, the function needs three inputs:</p>
+<p>To test for selection, the user can use the Zalpha function. This function assigns the first SNP in the dataset as the “target locus”, calculates the <span class="math inline">\(Z_{\alpha}\)</span> value, then moves on to the next SNP making that the target locus, until every SNP in the dataset has been considered. It works by calculating correlations between alleles on each side of the target locus and averaging them. To do this, the function needs three inputs:</p>
 <ul>
-<li><p>A vector of the physical locations of each of the SNPs</p></li>
-<li><p>The window size. This is set to 3000 for this small example but realistically a window size of around 200 Kb is appropriate. The window is centred on the target locus, and considers SNPs that are within ws/2 to the left and ws/2 to the right of the target SNP.</p></li>
-<li><p>A matrix of the SNP alleles across each chromosome in the sample. The number of rows should be equal to the number of SNPs, and the columns are each of the chromosomes.</p></li>
+<li><p><strong>pos</strong> A vector of the physical locations of each of the SNPs. For this example, we will use the first column from the snps dataset: snps$bp_positions.</p></li>
+<li><p><strong>ws</strong> The window size. This is set to 3000 bp for this small example but for human analysis realistically a window size of around 200 Kb is appropriate. The window is centred on the target locus and considers SNPs that are within ws/2 to the left and ws/2 to the right of the target SNP. ws should always use the same units as pos i.e. if pos is in bp, ws should be in bp.</p></li>
+<li><p><strong>x</strong> A matrix of the SNP alleles across each chromosome in the sample. The number of rows should be equal to the number of SNPs, and the columns are each of the chromosomes. For this example we extract the SNP values from the snps dataset found in columns 3 to 12, and convert into a matrix: as.matrix(snps[,3:12]).</p></li>
 </ul>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1">results&lt;-<span class="kw">Zalpha</span>(snps<span class="op">$</span>positions,<span class="dv">3000</span>,<span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>]))</a>
-<a class="sourceLine" id="cb2-2" title="2">results</a>
-<a class="sourceLine" id="cb2-3" title="3"><span class="co">#&gt; $position</span></a>
-<a class="sourceLine" id="cb2-4" title="4"><span class="co">#&gt;  [1]  100  200  300  400  500  600  700  800  900 1000 1100 1200 1300 1400 1500</span></a>
-<a class="sourceLine" id="cb2-5" title="5"><span class="co">#&gt; [16] 1600 1700 1800 1900 2000</span></a>
-<a class="sourceLine" id="cb2-6" title="6"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb2-7" title="7"><span class="co">#&gt; $Zalpha</span></a>
-<a class="sourceLine" id="cb2-8" title="8"><span class="co">#&gt;  [1]         NA         NA         NA         NA 0.09893585 0.10944106</span></a>
-<a class="sourceLine" id="cb2-9" title="9"><span class="co">#&gt;  [7] 0.11602964 0.11215782 0.12419556 0.12962040 0.12583275 0.11980489</span></a>
-<a class="sourceLine" id="cb2-10" title="10"><span class="co">#&gt; [13] 0.10802033 0.12064462 0.10873917 0.10267168         NA         NA</span></a>
-<a class="sourceLine" id="cb2-11" title="11"><span class="co">#&gt; [19]         NA         NA</span></a>
-<a class="sourceLine" id="cb2-12" title="12"><span class="kw">plot</span>(results<span class="op">$</span>position,results<span class="op">$</span>Zalpha)</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>results&lt;-<span class="kw">Zalpha</span>(snps<span class="op">$</span>bp_positions,<span class="dv">3000</span>,<span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>]))</span>
+<span id="cb2-2"><a href="#cb2-2"></a>results</span>
+<span id="cb2-3"><a href="#cb2-3"></a><span class="co">#&gt; $position</span></span>
+<span id="cb2-4"><a href="#cb2-4"></a><span class="co">#&gt;  [1]  100  200  300  400  500  600  700  800  900 1000 1100 1200 1300 1400 1500</span></span>
+<span id="cb2-5"><a href="#cb2-5"></a><span class="co">#&gt; [16] 1600 1700 1800 1900 2000</span></span>
+<span id="cb2-6"><a href="#cb2-6"></a><span class="co">#&gt; </span></span>
+<span id="cb2-7"><a href="#cb2-7"></a><span class="co">#&gt; $Zalpha</span></span>
+<span id="cb2-8"><a href="#cb2-8"></a><span class="co">#&gt;  [1]         NA         NA         NA         NA 0.09893585 0.10944106</span></span>
+<span id="cb2-9"><a href="#cb2-9"></a><span class="co">#&gt;  [7] 0.11602964 0.11215782 0.12419556 0.12962040 0.12583275 0.11980489</span></span>
+<span id="cb2-10"><a href="#cb2-10"></a><span class="co">#&gt; [13] 0.10802033 0.12064462 0.10873917 0.10267168         NA         NA</span></span>
+<span id="cb2-11"><a href="#cb2-11"></a><span class="co">#&gt; [19]         NA         NA</span></span>
+<span id="cb2-12"><a href="#cb2-12"></a><span class="kw">plot</span>(results<span class="op">$</span>position,results<span class="op">$</span>Zalpha)</span></code></pre></div>
 <p><img src="data:image/png;base64,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" /><!-- --></p>
-<p>The output shows the positions of each of the SNPs and the <span class="math inline">\(Z_{\alpha}\)</span> value calculated for each SNP. The NAs are due to the parameters minRandL and minRL, which have defaults 4 and 25 respectively. minRandL specifies the minimum number of SNPs that must be to the left and right of the target SNP within the window. minRL is the product of these numbers.</p>
+<p>The output is in the form of a list and shows the positions of each of the SNPs and the <span class="math inline">\(Z_{\alpha}\)</span> value calculated for each SNP. The NAs are because there were not enough SNPs on one side of the target locus for an accurate <span class="math inline">\(Z_{\alpha}\)</span> value to be calculated. This is controlled by the parameters minRandL and minRL, which have defaults 4 and 25 respectively. minRandL specifies the minimum number of SNPs that must be to the left and right of the target SNP within the window for <span class="math inline">\(Z_{\alpha}\)</span> to be calculated. minRL is the product of these numbers.</p>
+<p>The graph shows a sharp increase in <span class="math inline">\(Z_{\alpha}\)</span> values in the centre of this region, which could indicate the presence of a sweep. The user should compare the values across the whole genome to find outliers.</p>
 <p>Say the user is only interested in the output of Zalpha for a particular region of the chromosome; this is achieved by setting the “X” parameter to the lower and upper bounds of the region.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1"><span class="kw">Zalpha</span>(snps<span class="op">$</span>positions,<span class="dv">3000</span>,<span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>]),<span class="dt">X=</span><span class="kw">c</span>(<span class="dv">500</span>,<span class="dv">1000</span>))</a>
-<a class="sourceLine" id="cb3-2" title="2"><span class="co">#&gt; $position</span></a>
-<a class="sourceLine" id="cb3-3" title="3"><span class="co">#&gt; [1]  500  600  700  800  900 1000</span></a>
-<a class="sourceLine" id="cb3-4" title="4"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb3-5" title="5"><span class="co">#&gt; $Zalpha</span></a>
-<a class="sourceLine" id="cb3-6" title="6"><span class="co">#&gt; [1] 0.09893585 0.10944106 0.11602964 0.11215782 0.12419556 0.12962040</span></a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">Zalpha</span>(snps<span class="op">$</span>bp_positions,<span class="dv">3000</span>,<span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>]),<span class="dt">X=</span><span class="kw">c</span>(<span class="dv">500</span>,<span class="dv">1000</span>))</span>
+<span id="cb3-2"><a href="#cb3-2"></a><span class="co">#&gt; $position</span></span>
+<span id="cb3-3"><a href="#cb3-3"></a><span class="co">#&gt; [1]  500  600  700  800  900 1000</span></span>
+<span id="cb3-4"><a href="#cb3-4"></a><span class="co">#&gt; </span></span>
+<span id="cb3-5"><a href="#cb3-5"></a><span class="co">#&gt; $Zalpha</span></span>
+<span id="cb3-6"><a href="#cb3-6"></a><span class="co">#&gt; [1] 0.09893585 0.10944106 0.11602964 0.11215782 0.12419556 0.12962040</span></span></code></pre></div>
+<p>That concludes the simple example of the Zalpha function!</p>
+<p>It is recommended that the user uses the Zalpha_all function, as this function will calculate all the statistics in the zalpha package in one go, rather than running all of the statistics separately. More information on the Zalpha_all function can be found further down this vignette. Read on for information on the other statistics in the package and what they require.</p>
 </div>
-<div id="ld-profile" class="section level2">
-<h2>LD Profile</h2>
-<p>Using an LD profile allows the user to adjust for variable recombination rates along the chromosome. Here is the example LD profile provided with the zalpha R package:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">LDprofile</a>
-<a class="sourceLine" id="cb4-2" title="2"><span class="co">#&gt;       bin        rsq        sd    Beta_a    Beta_b</span></a>
-<a class="sourceLine" id="cb4-3" title="3"><span class="co">#&gt; 1  0.0000 0.12214545 0.2275545 0.2764342 1.8116558</span></a>
-<a class="sourceLine" id="cb4-4" title="4"><span class="co">#&gt; 2  0.0001 0.09335562 0.2197797 0.2708984 2.0267642</span></a>
-<a class="sourceLine" id="cb4-5" title="5"><span class="co">#&gt; 3  0.0002 0.12218997 0.2370013 0.2698494 1.6785461</span></a>
-<a class="sourceLine" id="cb4-6" title="6"><span class="co">#&gt; 4  0.0003 0.09042594 0.2005840 0.2639042 2.2719719</span></a>
-<a class="sourceLine" id="cb4-7" title="7"><span class="co">#&gt; 5  0.0004 0.09846861 0.2415291 0.2498579 1.5550545</span></a>
-<a class="sourceLine" id="cb4-8" title="8"><span class="co">#&gt; 6  0.0005 0.05234892 0.1645840 0.2734530 3.5077770</span></a>
-<a class="sourceLine" id="cb4-9" title="9"><span class="co">#&gt; 7  0.0006 0.09849803 0.2171552 0.2805981 2.0719602</span></a>
-<a class="sourceLine" id="cb4-10" title="10"><span class="co">#&gt; 8  0.0007 0.09234729 0.2185910 0.2729321 1.8642312</span></a>
-<a class="sourceLine" id="cb4-11" title="11"><span class="co">#&gt; 9  0.0008 0.05612510 0.1463234 0.3270302 4.5627156</span></a>
-<a class="sourceLine" id="cb4-12" title="12"><span class="co">#&gt; 10 0.0009 0.05799673 0.1569512 0.2875387 3.8010222</span></a>
-<a class="sourceLine" id="cb4-13" title="13"><span class="co">#&gt; 11 0.0010 0.06451333 0.1803580 0.2695071 2.7318059</span></a>
-<a class="sourceLine" id="cb4-14" title="14"><span class="co">#&gt; 12 0.0011 0.07202593 0.1980737 0.2575224 2.2259595</span></a>
-<a class="sourceLine" id="cb4-15" title="15"><span class="co">#&gt; 13 0.0012 0.10457653 0.2452326 0.2527777 1.5974515</span></a>
-<a class="sourceLine" id="cb4-16" title="16"><span class="co">#&gt; 14 0.0013 0.05750545 0.1681630 0.2854224 3.3140481</span></a>
-<a class="sourceLine" id="cb4-17" title="17"><span class="co">#&gt; 15 0.0014 0.09774452 0.2388637 0.1924497 0.6386457</span></a>
-<a class="sourceLine" id="cb4-18" title="18"><span class="co">#&gt; 16 0.0015 0.06229074 0.1752179 0.1791416 0.6853134</span></a>
-<a class="sourceLine" id="cb4-19" title="19"><span class="co">#&gt; 17 0.0016 0.08488753 0.1917311 0.3031776 2.7157927</span></a>
-<a class="sourceLine" id="cb4-20" title="20"><span class="co">#&gt; 18 0.0017 0.08160874 0.2037504 0.2639457 2.1465406</span></a>
-<a class="sourceLine" id="cb4-21" title="21"><span class="co">#&gt; 19 0.0018 0.08745139 0.2037958 0.2704832 2.2651764</span></a>
-<a class="sourceLine" id="cb4-22" title="22"><span class="co">#&gt; 20 0.0019 0.07123330 0.1840094 0.2810918 2.8468435</span></a>
-<a class="sourceLine" id="cb4-23" title="23"><span class="co">#&gt; 21 0.0020 0.09485261 0.2191376 0.2723791 1.9259026</span></a>
-<a class="sourceLine" id="cb4-24" title="24"><span class="co">#&gt; 22 0.0021 0.05804671 0.1458408 0.3207629 4.4316165</span></a>
-<a class="sourceLine" id="cb4-25" title="25"><span class="co">#&gt; 23 0.0022 0.06447594 0.1502141 0.3368500 4.2842122</span></a>
-<a class="sourceLine" id="cb4-26" title="26"><span class="co">#&gt; 24 0.0023 0.08147056 0.2012367 0.2690378 2.2633659</span></a>
-<a class="sourceLine" id="cb4-27" title="27"><span class="co">#&gt; 25 0.0024 0.09434107 0.2250389 0.2557325 1.8280552</span></a>
-<a class="sourceLine" id="cb4-28" title="28"><span class="co">#&gt; 26 0.0025 0.07046571 0.1831713 0.2857604 2.8830237</span></a>
-<a class="sourceLine" id="cb4-29" title="29"><span class="co">#&gt; 27 0.0026 0.08397797 0.1926024 0.2900191 2.4698181</span></a>
-<a class="sourceLine" id="cb4-30" title="30"><span class="co">#&gt; 28 0.0027 0.05834056 0.1662758 0.3033592 3.2711990</span></a>
-<a class="sourceLine" id="cb4-31" title="31"><span class="co">#&gt; 29 0.0028 0.06702507 0.1662532 0.2933794 3.2574873</span></a>
-<a class="sourceLine" id="cb4-32" title="32"><span class="co">#&gt; 30 0.0029 0.05820796 0.1723149 0.2682267 2.8738054</span></a>
-<a class="sourceLine" id="cb4-33" title="33"><span class="co">#&gt; 31 0.0030 0.09507890 0.2085120 0.2716050 2.1487500</span></a>
-<a class="sourceLine" id="cb4-34" title="34"><span class="co">#&gt; 32 0.0031 0.04551497 0.1239696 0.3296394 5.8488772</span></a>
-<a class="sourceLine" id="cb4-35" title="35"><span class="co">#&gt; 33 0.0032 0.04241460 0.1352978 0.3349360 5.5737334</span></a>
-<a class="sourceLine" id="cb4-36" title="36"><span class="co">#&gt; 34 0.0033 0.10255730 0.2259408 0.2718446 1.9065634</span></a>
-<a class="sourceLine" id="cb4-37" title="37"><span class="co">#&gt; 35 0.0034 0.05181171 0.1523572 0.2978946 4.0344464</span></a>
-<a class="sourceLine" id="cb4-38" title="38"><span class="co">#&gt; 36 0.0035 0.06537539 0.1633711 0.2937305 3.4617464</span></a>
-<a class="sourceLine" id="cb4-39" title="39"><span class="co">#&gt; 37 0.0036 0.07133690 0.1728133 0.2845848 3.0456476</span></a>
-<a class="sourceLine" id="cb4-40" title="40"><span class="co">#&gt; 38 0.0037 0.09034151 0.2365844 0.2438361 1.6296772</span></a>
-<a class="sourceLine" id="cb4-41" title="41"><span class="co">#&gt; 39 0.0038 0.06661469 0.1718022 0.2842834 3.1988517</span></a>
-<a class="sourceLine" id="cb4-42" title="42"><span class="co">#&gt; 40 0.0039 0.11322964 0.2325874 0.2031107 0.6843425</span></a>
-<a class="sourceLine" id="cb4-43" title="43"><span class="co">#&gt; 41 0.0040 0.10068963 0.2067405 0.2918418 2.1743057</span></a>
-<a class="sourceLine" id="cb4-44" title="44"><span class="co">#&gt; 42 0.0041 0.09924437 0.2321804 0.2601480 1.7887389</span></a>
-<a class="sourceLine" id="cb4-45" title="45"><span class="co">#&gt; 43 0.0042 0.07122869 0.1813322 0.2701038 2.7201233</span></a>
-<a class="sourceLine" id="cb4-46" title="46"><span class="co">#&gt; 44 0.0043 0.11335340 0.2081721 0.2869211 2.0950029</span></a>
-<a class="sourceLine" id="cb4-47" title="47"><span class="co">#&gt; 45 0.0044 0.11286222 0.2357003 0.2679826 1.6981865</span></a>
-<a class="sourceLine" id="cb4-48" title="48"><span class="co">#&gt; 46 0.0045 0.05429260 0.1622758 0.2940277 3.7098450</span></a>
-<a class="sourceLine" id="cb4-49" title="49"><span class="co">#&gt; 47 0.0046 0.07505181 0.1992234 0.2679613 2.3091843</span></a>
-<a class="sourceLine" id="cb4-50" title="50"><span class="co">#&gt; 48 0.0047 0.08873456 0.1996523 0.2754293 2.3102141</span></a>
-<a class="sourceLine" id="cb4-51" title="51"><span class="co">#&gt; 49 0.0048 0.06982331 0.1902250 0.2603511 2.4806350</span></a>
-<a class="sourceLine" id="cb4-52" title="52"><span class="co">#&gt; 50 0.0049 0.07837201 0.1944029 0.2745399 2.5207091</span></a></code></pre></div>
-<p>The LD (linkage disequilibrium) profile contains data about the expected correlation between SNPs given the genetic distance between them. This could be generated using a simulated chromosome where the genetic distances are known, after which the statistics can be calculated. The columns are:</p>
+<div id="adjusting-for-expected-correlations-between-snps" class="section level2">
+<h2>Adjusting for expected correlations between SNPs</h2>
+<p>There are many reasons apart from selection that pairs of SNPs could be more correlated than the rest of the genome, including regions of low recombination and genetic drift. This package allows the user to correct for expected correlations between SNPs. There are multiple functions included in this package that adjust for expected correlations, all of which have an example below. First however, the new inputs will be described. The extra inputs required are:</p>
 <ul>
-<li><p>bin: this is the lower bound of the bin. In this example, row 1 would include any SNPs greater than or equal to 0 but less than 0.0001 centimorgans apart (or whatever measure of genetic distance applicable for the user).</p></li>
-<li><p>rsq: the expected r<sup>2</sup> value for SNPs whose genetic distance between them falls within the bin.</p></li>
-<li><p>sd: the standard deviation of r<sup>2</sup> for the bin.</p></li>
-<li><p>Beta_a: the first shape of the Beta distribution fitted to this bin. The R function fitdist can be used to estimate the Beta parameters.</p></li>
-<li><p>Beta_b: the second shape of the Beta distribution.</p></li>
+<li><p><strong>dist</strong> A vector containing the genetic distances between SNPs</p></li>
+<li><p>An LD profile</p></li>
 </ul>
-<p>For example, if we assume the bins are in centimorgans, and we know two SNPs are 0.00015 cM apart, the LDprofile tells us that we expect the r<sup>2</sup> value to be 0.093, with a standard deviation of 0.22 and fits the distribution Beta(0.27,2.03).</p>
-<p>For real world data, Jacobs et al. (2016) recommend using distances up to 2 cM assigned to 20,000 bins.</p>
+<p>Returning to the snps example dataset, we can now consider the second column of the dataset “cM_distances”.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>snps<span class="op">$</span>cM_distances</span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="co">#&gt;  [1] 0.0001 0.0002 0.0005 0.0008 0.0010 0.0015 0.0017 0.0019 0.0023 0.0024</span></span>
+<span id="cb4-3"><a href="#cb4-3"></a><span class="co">#&gt; [11] 0.0026 0.0027 0.0032 0.0037 0.0039 0.0040 0.0041 0.0045 0.0048 0.0049</span></span></code></pre></div>
+<p>Each value is the genetic distance of the SNP from the start of the chromosome. This could be in centimorgans (cM), linkage disequilibrium units (LDU) or any other way of measuring genetic distance, as long as it is additive (i.e. the distance between SNP A and SNP C is equal to the distance between SNP A and SNP B plus SNP B and SNP C).</p>
+<p>There are many ways of calculating the genetic distances between SNPs. Some software that could be used include LDhat[2], pyrho[3], FastEPRR[4], and LDJump[5].</p>
+<div id="ld-profile" class="section level3">
+<h3>LD Profile</h3>
+<p>Using an LD (linkage disequilibrium) profile allows the user to adjust for variable recombination rates along the chromosome. An LD profile is a basic look-up table. It tells the user what the expected correlation between two SNPs is, given the genetic distance between them. Here is the example LD profile provided with the zalpha R package:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw">data</span>(LDprofile)</span>
+<span id="cb5-2"><a href="#cb5-2"></a>LDprofile</span>
+<span id="cb5-3"><a href="#cb5-3"></a><span class="co">#&gt;       bin        rsq        sd    Beta_a    Beta_b</span></span>
+<span id="cb5-4"><a href="#cb5-4"></a><span class="co">#&gt; 1  0.0000 0.12214545 0.2275545 0.2764342 1.8116558</span></span>
+<span id="cb5-5"><a href="#cb5-5"></a><span class="co">#&gt; 2  0.0001 0.09335562 0.2197797 0.2708984 2.0267642</span></span>
+<span id="cb5-6"><a href="#cb5-6"></a><span class="co">#&gt; 3  0.0002 0.12218997 0.2370013 0.2698494 1.6785461</span></span>
+<span id="cb5-7"><a href="#cb5-7"></a><span class="co">#&gt; 4  0.0003 0.09042594 0.2005840 0.2639042 2.2719719</span></span>
+<span id="cb5-8"><a href="#cb5-8"></a><span class="co">#&gt; 5  0.0004 0.09846861 0.2415291 0.2498579 1.5550545</span></span>
+<span id="cb5-9"><a href="#cb5-9"></a><span class="co">#&gt; 6  0.0005 0.05234892 0.1645840 0.2734530 3.5077770</span></span>
+<span id="cb5-10"><a href="#cb5-10"></a><span class="co">#&gt; 7  0.0006 0.09849803 0.2171552 0.2805981 2.0719602</span></span>
+<span id="cb5-11"><a href="#cb5-11"></a><span class="co">#&gt; 8  0.0007 0.09234729 0.2185910 0.2729321 1.8642312</span></span>
+<span id="cb5-12"><a href="#cb5-12"></a><span class="co">#&gt; 9  0.0008 0.05612510 0.1463234 0.3270302 4.5627156</span></span>
+<span id="cb5-13"><a href="#cb5-13"></a><span class="co">#&gt; 10 0.0009 0.05799673 0.1569512 0.2875387 3.8010222</span></span>
+<span id="cb5-14"><a href="#cb5-14"></a><span class="co">#&gt; 11 0.0010 0.06451333 0.1803580 0.2695071 2.7318059</span></span>
+<span id="cb5-15"><a href="#cb5-15"></a><span class="co">#&gt; 12 0.0011 0.07202593 0.1980737 0.2575224 2.2259595</span></span>
+<span id="cb5-16"><a href="#cb5-16"></a><span class="co">#&gt; 13 0.0012 0.10457653 0.2452326 0.2527777 1.5974515</span></span>
+<span id="cb5-17"><a href="#cb5-17"></a><span class="co">#&gt; 14 0.0013 0.05750545 0.1681630 0.2854224 3.3140481</span></span>
+<span id="cb5-18"><a href="#cb5-18"></a><span class="co">#&gt; 15 0.0014 0.09774452 0.2388637 0.1924497 0.6386457</span></span>
+<span id="cb5-19"><a href="#cb5-19"></a><span class="co">#&gt; 16 0.0015 0.06229074 0.1752179 0.1791416 0.6853134</span></span>
+<span id="cb5-20"><a href="#cb5-20"></a><span class="co">#&gt; 17 0.0016 0.08488753 0.1917311 0.3031776 2.7157927</span></span>
+<span id="cb5-21"><a href="#cb5-21"></a><span class="co">#&gt; 18 0.0017 0.08160874 0.2037504 0.2639457 2.1465406</span></span>
+<span id="cb5-22"><a href="#cb5-22"></a><span class="co">#&gt; 19 0.0018 0.08745139 0.2037958 0.2704832 2.2651764</span></span>
+<span id="cb5-23"><a href="#cb5-23"></a><span class="co">#&gt; 20 0.0019 0.07123330 0.1840094 0.2810918 2.8468435</span></span>
+<span id="cb5-24"><a href="#cb5-24"></a><span class="co">#&gt; 21 0.0020 0.09485261 0.2191376 0.2723791 1.9259026</span></span>
+<span id="cb5-25"><a href="#cb5-25"></a><span class="co">#&gt; 22 0.0021 0.05804671 0.1458408 0.3207629 4.4316165</span></span>
+<span id="cb5-26"><a href="#cb5-26"></a><span class="co">#&gt; 23 0.0022 0.06447594 0.1502141 0.3368500 4.2842122</span></span>
+<span id="cb5-27"><a href="#cb5-27"></a><span class="co">#&gt; 24 0.0023 0.08147056 0.2012367 0.2690378 2.2633659</span></span>
+<span id="cb5-28"><a href="#cb5-28"></a><span class="co">#&gt; 25 0.0024 0.09434107 0.2250389 0.2557325 1.8280552</span></span>
+<span id="cb5-29"><a href="#cb5-29"></a><span class="co">#&gt; 26 0.0025 0.07046571 0.1831713 0.2857604 2.8830237</span></span>
+<span id="cb5-30"><a href="#cb5-30"></a><span class="co">#&gt; 27 0.0026 0.08397797 0.1926024 0.2900191 2.4698181</span></span>
+<span id="cb5-31"><a href="#cb5-31"></a><span class="co">#&gt; 28 0.0027 0.05834056 0.1662758 0.3033592 3.2711990</span></span>
+<span id="cb5-32"><a href="#cb5-32"></a><span class="co">#&gt; 29 0.0028 0.06702507 0.1662532 0.2933794 3.2574873</span></span>
+<span id="cb5-33"><a href="#cb5-33"></a><span class="co">#&gt; 30 0.0029 0.05820796 0.1723149 0.2682267 2.8738054</span></span>
+<span id="cb5-34"><a href="#cb5-34"></a><span class="co">#&gt; 31 0.0030 0.09507890 0.2085120 0.2716050 2.1487500</span></span>
+<span id="cb5-35"><a href="#cb5-35"></a><span class="co">#&gt; 32 0.0031 0.04551497 0.1239696 0.3296394 5.8488772</span></span>
+<span id="cb5-36"><a href="#cb5-36"></a><span class="co">#&gt; 33 0.0032 0.04241460 0.1352978 0.3349360 5.5737334</span></span>
+<span id="cb5-37"><a href="#cb5-37"></a><span class="co">#&gt; 34 0.0033 0.10255730 0.2259408 0.2718446 1.9065634</span></span>
+<span id="cb5-38"><a href="#cb5-38"></a><span class="co">#&gt; 35 0.0034 0.05181171 0.1523572 0.2978946 4.0344464</span></span>
+<span id="cb5-39"><a href="#cb5-39"></a><span class="co">#&gt; 36 0.0035 0.06537539 0.1633711 0.2937305 3.4617464</span></span>
+<span id="cb5-40"><a href="#cb5-40"></a><span class="co">#&gt; 37 0.0036 0.07133690 0.1728133 0.2845848 3.0456476</span></span>
+<span id="cb5-41"><a href="#cb5-41"></a><span class="co">#&gt; 38 0.0037 0.09034151 0.2365844 0.2438361 1.6296772</span></span>
+<span id="cb5-42"><a href="#cb5-42"></a><span class="co">#&gt; 39 0.0038 0.06661469 0.1718022 0.2842834 3.1988517</span></span>
+<span id="cb5-43"><a href="#cb5-43"></a><span class="co">#&gt; 40 0.0039 0.11322964 0.2325874 0.2031107 0.6843425</span></span>
+<span id="cb5-44"><a href="#cb5-44"></a><span class="co">#&gt; 41 0.0040 0.10068963 0.2067405 0.2918418 2.1743057</span></span>
+<span id="cb5-45"><a href="#cb5-45"></a><span class="co">#&gt; 42 0.0041 0.09924437 0.2321804 0.2601480 1.7887389</span></span>
+<span id="cb5-46"><a href="#cb5-46"></a><span class="co">#&gt; 43 0.0042 0.07122869 0.1813322 0.2701038 2.7201233</span></span>
+<span id="cb5-47"><a href="#cb5-47"></a><span class="co">#&gt; 44 0.0043 0.11335340 0.2081721 0.2869211 2.0950029</span></span>
+<span id="cb5-48"><a href="#cb5-48"></a><span class="co">#&gt; 45 0.0044 0.11286222 0.2357003 0.2679826 1.6981865</span></span>
+<span id="cb5-49"><a href="#cb5-49"></a><span class="co">#&gt; 46 0.0045 0.05429260 0.1622758 0.2940277 3.7098450</span></span>
+<span id="cb5-50"><a href="#cb5-50"></a><span class="co">#&gt; 47 0.0046 0.07505181 0.1992234 0.2679613 2.3091843</span></span>
+<span id="cb5-51"><a href="#cb5-51"></a><span class="co">#&gt; 48 0.0047 0.08873456 0.1996523 0.2754293 2.3102141</span></span>
+<span id="cb5-52"><a href="#cb5-52"></a><span class="co">#&gt; 49 0.0048 0.06982331 0.1902250 0.2603511 2.4806350</span></span>
+<span id="cb5-53"><a href="#cb5-53"></a><span class="co">#&gt; 50 0.0049 0.07837201 0.1944029 0.2745399 2.5207091</span></span></code></pre></div>
+<p>The LD profile contains data about the expected correlation between SNPs given the genetic distance between them. The columns in the example are:</p>
+<ul>
+<li><p><strong>bin</strong> This is the lower bound of the bin. In this example, row 1 would include any SNPs greater than or equal to 0 but less than 0.0001 centimorgans apart.</p></li>
+<li><p><strong>rsq</strong> The expected r<sup>2</sup> value for pairs of SNPs whose genetic distance between them falls within the bin.</p></li>
+<li><p><strong>sd</strong> The standard deviation of r<sup>2</sup> for the bin.</p></li>
+<li><p><strong>Beta_a</strong> The first shape of the Beta distribution fitted to this bin.</p></li>
+<li><p><strong>Beta_b</strong> The second shape of the Beta distribution.</p></li>
+</ul>
+<p>If we know two SNPs are 0.00017 cM apart, this LD profile tells us that we expect the r<sup>2</sup> value to be 0.093, with a standard deviation of 0.22, and that the expected distribution of r<sup>2</sup> values for SNPs this far apart is Beta(0.27,2.03).</p>
+<p>The package contains a function for creating an LD profile. This is explained lower down this vignette. The vignette continues by using the example LDprofile dataset supplied.</p>
+</div>
 </div>
 <div id="zalpha_expected" class="section level2">
 <h2>Zalpha_expected</h2>
-<p>The expected <span class="math inline">\(Z_{\alpha}\)</span> value (denoted <span class="math inline">\(Z_{\alpha}^{E[r^2]}\)</span>) can be calculated for a chromosome given an LD profile and the genetic distances between each SNP in the chromosome. Instead of calculating the r<sup>2</sup> values between SNPs, the function works out the genetic distance between them, finds the bin in the LD profile that the genetic distance falls into, and reads out the expected r<sup>2</sup> value. The function then calculates <span class="math inline">\(Z_{\alpha}\)</span> as normal.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw">Zalpha_expected</span>(snps<span class="op">$</span>positions, <span class="dv">3000</span>, snps<span class="op">$</span>distances, LDprofile<span class="op">$</span>bin, LDprofile<span class="op">$</span>rsq)</a>
-<a class="sourceLine" id="cb5-2" title="2"><span class="co">#&gt; $position</span></a>
-<a class="sourceLine" id="cb5-3" title="3"><span class="co">#&gt;  [1]  100  200  300  400  500  600  700  800  900 1000 1100 1200 1300 1400 1500</span></a>
-<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt; [16] 1600 1700 1800 1900 2000</span></a>
-<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb5-6" title="6"><span class="co">#&gt; $Zalpha_expected</span></a>
-<a class="sourceLine" id="cb5-7" title="7"><span class="co">#&gt;  [1]         NA         NA         NA         NA 0.08633502 0.08169169</span></a>
-<a class="sourceLine" id="cb5-8" title="8"><span class="co">#&gt;  [7] 0.07981817 0.08104324 0.08134506 0.08015626 0.07984135 0.08082988</span></a>
-<a class="sourceLine" id="cb5-9" title="9"><span class="co">#&gt; [13] 0.08263229 0.08040794 0.07822704 0.08289555         NA         NA</span></a>
-<a class="sourceLine" id="cb5-10" title="10"><span class="co">#&gt; [19]         NA         NA</span></a></code></pre></div>
-<p>Once <span class="math inline">\(Z_{\alpha}^{E[r^2]}\)</span> has been calculated, it can be combined with the <span class="math inline">\(Z_{\alpha}\)</span> results to adjust for recombination, for example by computing <span class="math inline">\(Z_{\alpha}\)</span> - <span class="math inline">\(Z_{\alpha}^{E[r^2]}\)</span> or <span class="math inline">\(Z_{\alpha}\)</span>/<span class="math inline">\(Z_{\alpha}^{E[r^2]}\)</span>.</p>
-<p>Other functions that take into account variable recombination rates are Zalpha_rsq_over_expected, Zalpha_log_rsq_over_expected, Zalpha_Zscore, and Zalpha_BetaCDF.</p>
+<p>The expected <span class="math inline">\(Z_{\alpha}\)</span> value (denoted <span class="math inline">\(Z_{\alpha}^{E[r^2]}\)</span>) can be calculated for a chromosome given an LD profile and the genetic distances between each SNP in the chromosome. Instead of calculating the r<sup>2</sup> values between SNPs, the function uses the expected correlations. It does this by working out the genetic distance between each pair of SNPs and uses the r<sup>2</sup> values given in the LD profile for SNPs that far apart.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw">Zalpha_expected</span>(snps<span class="op">$</span>bp_positions, <span class="dv">3000</span>, snps<span class="op">$</span>cM_distances, LDprofile<span class="op">$</span>bin, LDprofile<span class="op">$</span>rsq)</span>
+<span id="cb6-2"><a href="#cb6-2"></a><span class="co">#&gt; $position</span></span>
+<span id="cb6-3"><a href="#cb6-3"></a><span class="co">#&gt;  [1]  100  200  300  400  500  600  700  800  900 1000 1100 1200 1300 1400 1500</span></span>
+<span id="cb6-4"><a href="#cb6-4"></a><span class="co">#&gt; [16] 1600 1700 1800 1900 2000</span></span>
+<span id="cb6-5"><a href="#cb6-5"></a><span class="co">#&gt; </span></span>
+<span id="cb6-6"><a href="#cb6-6"></a><span class="co">#&gt; $Zalpha_expected</span></span>
+<span id="cb6-7"><a href="#cb6-7"></a><span class="co">#&gt;  [1]         NA         NA         NA         NA 0.08633502 0.08169169</span></span>
+<span id="cb6-8"><a href="#cb6-8"></a><span class="co">#&gt;  [7] 0.07981817 0.08104324 0.08134506 0.08015626 0.07984135 0.08082988</span></span>
+<span id="cb6-9"><a href="#cb6-9"></a><span class="co">#&gt; [13] 0.08263229 0.08040794 0.07822704 0.08289555         NA         NA</span></span>
+<span id="cb6-10"><a href="#cb6-10"></a><span class="co">#&gt; [19]         NA         NA</span></span></code></pre></div>
+<p>Note that this statistic does not use the SNP value data. Once <span class="math inline">\(Z_{\alpha}^{E[r^2]}\)</span> has been calculated, it can be combined with the <span class="math inline">\(Z_{\alpha}\)</span> results to adjust for recombination, for example by computing <span class="math inline">\(Z_{\alpha}\)</span>/<span class="math inline">\(Z_{\alpha}^{E[r^2]}\)</span>. Outliers in this new combined statistic could be potential selection candidates.</p>
+<p>Other functions that take into account variable recombination rates are Zalpha_rsq_over_expected, Zalpha_log_rsq_over_expected, Zalpha_Zscore, and Zalpha_BetaCDF. These statistics all use the actual r<sup>2</sup> values from the data combined with the expected r<sup>2</sup> values from the LD profile in various ways.</p>
+<p>Examples of these statistics are here:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw">Zalpha_rsq_over_expected</span>(snps<span class="op">$</span>bp_positions, <span class="dv">3000</span>, <span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>]), snps<span class="op">$</span>cM_distances, LDprofile<span class="op">$</span>bin, LDprofile<span class="op">$</span>rsq)</span>
+<span id="cb7-2"><a href="#cb7-2"></a><span class="co">#&gt; $position</span></span>
+<span id="cb7-3"><a href="#cb7-3"></a><span class="co">#&gt;  [1]  100  200  300  400  500  600  700  800  900 1000 1100 1200 1300 1400 1500</span></span>
+<span id="cb7-4"><a href="#cb7-4"></a><span class="co">#&gt; [16] 1600 1700 1800 1900 2000</span></span>
+<span id="cb7-5"><a href="#cb7-5"></a><span class="co">#&gt; </span></span>
+<span id="cb7-6"><a href="#cb7-6"></a><span class="co">#&gt; $Zalpha_rsq_over_expected</span></span>
+<span id="cb7-7"><a href="#cb7-7"></a><span class="co">#&gt;  [1]       NA       NA       NA       NA 1.229709 1.455017 1.557973 1.473750</span></span>
+<span id="cb7-8"><a href="#cb7-8"></a><span class="co">#&gt;  [9] 1.663279 1.748810 1.655937 1.560111 1.348384 1.540937 1.403390 1.302492</span></span>
+<span id="cb7-9"><a href="#cb7-9"></a><span class="co">#&gt; [17]       NA       NA       NA       NA</span></span>
+<span id="cb7-10"><a href="#cb7-10"></a><span class="kw">Zalpha_log_rsq_over_expected</span>(snps<span class="op">$</span>bp_positions, <span class="dv">3000</span>, <span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>]), snps<span class="op">$</span>cM_distances, LDprofile<span class="op">$</span>bin, LDprofile<span class="op">$</span>rsq)</span>
+<span id="cb7-11"><a href="#cb7-11"></a><span class="co">#&gt; $position</span></span>
+<span id="cb7-12"><a href="#cb7-12"></a><span class="co">#&gt;  [1]  100  200  300  400  500  600  700  800  900 1000 1100 1200 1300 1400 1500</span></span>
+<span id="cb7-13"><a href="#cb7-13"></a><span class="co">#&gt; [16] 1600 1700 1800 1900 2000</span></span>
+<span id="cb7-14"><a href="#cb7-14"></a><span class="co">#&gt; </span></span>
+<span id="cb7-15"><a href="#cb7-15"></a><span class="co">#&gt; $Zalpha_log_rsq_over_expected</span></span>
+<span id="cb7-16"><a href="#cb7-16"></a><span class="co">#&gt;  [1]          NA          NA          NA          NA -2.80109183 -2.52953641</span></span>
+<span id="cb7-17"><a href="#cb7-17"></a><span class="co">#&gt;  [7] -2.89862430 -0.06997296 -0.04968498 -0.05720747 -0.09096136 -0.14235949</span></span>
+<span id="cb7-18"><a href="#cb7-18"></a><span class="co">#&gt; [13] -0.18846597 -0.11839984 -0.18570016 -3.28861224          NA          NA</span></span>
+<span id="cb7-19"><a href="#cb7-19"></a><span class="co">#&gt; [19]          NA          NA</span></span>
+<span id="cb7-20"><a href="#cb7-20"></a><span class="kw">Zalpha_Zscore</span>(snps<span class="op">$</span>bp_positions, <span class="dv">3000</span>, <span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>]), snps<span class="op">$</span>cM_distances, LDprofile<span class="op">$</span>bin, LDprofile<span class="op">$</span>rsq, LDprofile<span class="op">$</span>sd)</span>
+<span id="cb7-21"><a href="#cb7-21"></a><span class="co">#&gt; $position</span></span>
+<span id="cb7-22"><a href="#cb7-22"></a><span class="co">#&gt;  [1]  100  200  300  400  500  600  700  800  900 1000 1100 1200 1300 1400 1500</span></span>
+<span id="cb7-23"><a href="#cb7-23"></a><span class="co">#&gt; [16] 1600 1700 1800 1900 2000</span></span>
+<span id="cb7-24"><a href="#cb7-24"></a><span class="co">#&gt; </span></span>
+<span id="cb7-25"><a href="#cb7-25"></a><span class="co">#&gt; $Zalpha_Zscore</span></span>
+<span id="cb7-26"><a href="#cb7-26"></a><span class="co">#&gt;  [1]         NA         NA         NA         NA 0.08320337 0.17092137</span></span>
+<span id="cb7-27"><a href="#cb7-27"></a><span class="co">#&gt;  [7] 0.21026515 0.17941815 0.24933136 0.28017067 0.25141352 0.21744923</span></span>
+<span id="cb7-28"><a href="#cb7-28"></a><span class="co">#&gt; [13] 0.13918111 0.21735113 0.16446541 0.12300862         NA         NA</span></span>
+<span id="cb7-29"><a href="#cb7-29"></a><span class="co">#&gt; [19]         NA         NA</span></span>
+<span id="cb7-30"><a href="#cb7-30"></a><span class="kw">Zalpha_BetaCDF</span>(snps<span class="op">$</span>bp_positions, <span class="dv">3000</span>, <span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>]), snps<span class="op">$</span>cM_distances, LDprofile<span class="op">$</span>bin, LDprofile<span class="op">$</span>Beta_a, LDprofile<span class="op">$</span>Beta_b)</span>
+<span id="cb7-31"><a href="#cb7-31"></a><span class="co">#&gt; $position</span></span>
+<span id="cb7-32"><a href="#cb7-32"></a><span class="co">#&gt;  [1]  100  200  300  400  500  600  700  800  900 1000 1100 1200 1300 1400 1500</span></span>
+<span id="cb7-33"><a href="#cb7-33"></a><span class="co">#&gt; [16] 1600 1700 1800 1900 2000</span></span>
+<span id="cb7-34"><a href="#cb7-34"></a><span class="co">#&gt; </span></span>
+<span id="cb7-35"><a href="#cb7-35"></a><span class="co">#&gt; $Zalpha_BetaCDF</span></span>
+<span id="cb7-36"><a href="#cb7-36"></a><span class="co">#&gt;  [1]        NA        NA        NA        NA 0.5553324 0.6013140 0.6135663</span></span>
+<span id="cb7-37"><a href="#cb7-37"></a><span class="co">#&gt;  [8] 0.6114601 0.6153488 0.6073154 0.5895785 0.6060782 0.5871007 0.6161310</span></span>
+<span id="cb7-38"><a href="#cb7-38"></a><span class="co">#&gt; [15] 0.5889128 0.5730982        NA        NA        NA        NA</span></span></code></pre></div>
+<p>Note that not all the statistics need all the columns from the LD profile.</p>
 </div>
 <div id="zbeta" class="section level2">
 <h2>Zbeta</h2>
-<p>The Zbeta function works in exactly the same way as the Zalpha function, but evaluates correlations between SNPs on either side of the target locus, rather than each side separately. It is useful to use the <span class="math inline">\(Z_{\beta}\)</span> statistic in conjunction with the <span class="math inline">\(Z_{\alpha}\)</span> statistic, as they behave differently depending on how close to fixation the sweep is. For example, while a sweep is in progress both <span class="math inline">\(Z_{\alpha}\)</span> and <span class="math inline">\(Z_{\beta}\)</span> would be higher than other areas of the chromosome without a sweep present. However, when a sweep reaches near-fixation, <span class="math inline">\(Z_{\beta}\)</span> would decrease whereas <span class="math inline">\(Z_{\alpha}\)</span> would remain high. Combining <span class="math inline">\(Z_{\alpha}\)</span> and <span class="math inline">\(Z_{\beta}\)</span> into new statistics such as <span class="math inline">\(Z_{\alpha}\)</span>/<span class="math inline">\(Z_{\beta}\)</span> is one way of analysing this.</p>
+<p>The Zbeta function works in the same way as the Zalpha function but evaluates correlations between pairs of SNPs where one is to the left of the target locus and the other is to the right. It is useful to use the <span class="math inline">\(Z_{\beta}\)</span> statistic in conjunction with the <span class="math inline">\(Z_{\alpha}\)</span> statistic, as they behave differently depending on how close to fixation the sweep is. For example, while a sweep is in progress both <span class="math inline">\(Z_{\alpha}\)</span> and <span class="math inline">\(Z_{\beta}\)</span> would be higher than other areas of the chromosome without a sweep present. However, when a sweep reaches near-fixation, <span class="math inline">\(Z_{\beta}\)</span> would decrease whereas <span class="math inline">\(Z_{\alpha}\)</span> would remain high. Combining <span class="math inline">\(Z_{\alpha}\)</span> and <span class="math inline">\(Z_{\beta}\)</span> into new statistics such as <span class="math inline">\(Z_{\alpha}\)</span>/<span class="math inline">\(Z_{\beta}\)</span> is one way of analysing this.</p>
+<p>The Zbeta function requires the exact same inputs as the Zalpha function. Here is an example:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>results&lt;-<span class="kw">Zbeta</span>(snps<span class="op">$</span>bp_positions,<span class="dv">3000</span>,<span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>]))</span>
+<span id="cb8-2"><a href="#cb8-2"></a>results</span>
+<span id="cb8-3"><a href="#cb8-3"></a><span class="co">#&gt; $position</span></span>
+<span id="cb8-4"><a href="#cb8-4"></a><span class="co">#&gt;  [1]  100  200  300  400  500  600  700  800  900 1000 1100 1200 1300 1400 1500</span></span>
+<span id="cb8-5"><a href="#cb8-5"></a><span class="co">#&gt; [16] 1600 1700 1800 1900 2000</span></span>
+<span id="cb8-6"><a href="#cb8-6"></a><span class="co">#&gt; </span></span>
+<span id="cb8-7"><a href="#cb8-7"></a><span class="co">#&gt; $Zbeta</span></span>
+<span id="cb8-8"><a href="#cb8-8"></a><span class="co">#&gt;  [1]        NA        NA        NA        NA 0.1280042 0.1298619 0.1219965</span></span>
+<span id="cb8-9"><a href="#cb8-9"></a><span class="co">#&gt;  [8] 0.1071535 0.1124896 0.1121871 0.1033178 0.1185118 0.1212802 0.1281512</span></span>
+<span id="cb8-10"><a href="#cb8-10"></a><span class="co">#&gt; [15] 0.1275420 0.1442328        NA        NA        NA        NA</span></span>
+<span id="cb8-11"><a href="#cb8-11"></a><span class="kw">plot</span>(results<span class="op">$</span>position,results<span class="op">$</span>Zbeta)</span></code></pre></div>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASAAAAEgCAMAAAAjXV6yAAAAaVBMVEUAAAAAADoAAGYAOpAAZrY6AAA6ADo6AGY6Ojo6OpA6kNtmAABmADpmOpBmkJBmtrZmtv+QOgCQkGaQtpCQ2/+2ZgC2tma2/7a2///bkDrb25Db2//b/7bb////tmb/25D//7b//9v///+izcEbAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAInklEQVR4nO2dAZejJhhFnZlk25puN9OO7djumIz//0dWQIxmIk/wEzR595zM5iT4Ee8iIKBmNXGSpf4Ba4eCABQEoCAABQEoCEBBAAoCUBCAggAUBKAgAAUBKAhAQQAKAlAQgIIAFASgIAAFASgIQEEACgJQEICCABQEoCAABQEoCEBBAAoCUBCAggAUBKAgAAUBKAhAQQAKAlAQgIIAFASgIAAFASgIQEEACgJQEICCABQEoCAABQEoCEBBAAoCUBCAggAUBKAgAAUBKAhAQQAKAlAQgIIAFASgIAAFASgIQEEACgJQEICCABQEoCAABQGEBWWbIZUg2XABP2Dirj+qoGzqb3hQQdnkH0FBk1JKJkwSLix7CnLnzzrI+QPYiskQIOh8MD2o5/cY+aYmQFDx8lHu6tP+GCXf1PgLOh/yunr5qMvmFSHf1IQIOtanX971K0K+qfEX9Pma1+ff3yhoNGHZ1M5FzkNsPGGxUy1ZUCPmP4qQGvaDAAGVdFP/KCr2g24ntIJKCrqVsLjUInmUfFMTXoIi5ZsaVtKAEEFNG//yUcw6wu5aUPX01nQS1SlZjHxTE3aqoXrRbMVGEqqTVSWI/aCRhLYEFfBcrMqyp7EW744FtXVQmbkGzJruUn767UMXt3n5piawFXOUDYUqXYVOMXbOf9eCILrcnL4pQWM11aMLUl2Az//qBy1B+hBzVtFdF2C0t3TPgipdPZfOSqj9thqtye9YkGrmFbiZF8k3NWEdRQU7iiMJP193+l8O2o8lrPRQWeWsg+TyTY2nIDsv756bn5DqXgVN5PMVVVCegtLNEy00omgrKqFwk5c7yeN7iF0GpN2t2EgPKGzicPqCOXn86yBbNCI285sS9OPwFG/isC1pEoJCazFvQce6NDNiEQR1Vc/8OugSylNUgKD6tFdupgkaG7mekm+v4MxtxbpQ3qpDBKkBwzxCCRKsemwo/5BhglQh+puCbiS8jDEXEVa5CnZ/2lCLC+rhXIL3+QpOR7xaMQl6DeKSddBESrv0oxpbA5LsXGzhVqwdJyubbByzPnZMrX7AMWk9lqqGOlwLyXuzYY82q3E+7OyZqGPI9YFLUG+BmWuNWTftur46yBfvEpTbwUTnoL0dMhtNc6+C6uL53Rxho2VDON/U+LdipliU8/zcsaDY+V5tFn3odVuCEgy9BghSFXUJJufl8v26kd+ZwtwiFyCoab5O+526pCVGvl838j3VlBhJ8kmouslqSD7B1LO3IIEBkzBBTWOfZJWrb4FIIqg5ts4HtU46/iHmXaWkEdT0kp/e4MygVL7zSFEHzcsu9hWHCVqxbVxQJ/ZfEC5o1ZciyPUovU9WN3FBnfh8iE/CLVxQl1SQDBQUN9yt8EnqoGlL8CTzDY2frhWLnG9qKAgQcrK6hUNMjOASNK8j/QCCUgyYpSBc0LrPxcQIF+Q4F+NK+7qdpR9DfKV9OsJbMeeshvBK+/Ewiw8sLdUPGr/WMCicI0p73rWUqU13FC/npMvNKG5q4vB2kEz07P12Hl4J000c3g6yNkEJJw5vRunVQyIxb2ThlzDlxOHXMNmwHpJnkYnDBB3FNbViEyYOH7qjOIlYHcXlidxRjD6zOpsQQbwLnjsh74LnTsi74IGEfnfBm3NJpuvXxFse4p1w+l3wRPId3TqSoeA6yH0XPLl8xzeOYyiwFQN3wRPMd3zj9QqagNAlmc6N1yqodzHYKEtfkrnqOmj05poXlr+gbs2t2IT2/YEvyawnzc0/8CWZE0l3Sab4sbdQK5bqkkz52nvT0z4jUUVjU9CkkJIJk4QbRKUgd1jWQc64G2nFYodbjmSCNkMiQeK5yu+I5x5TkGxyIShILFcKkkpJQdETBiUXgoLEcqUgqZT3JWhDUBCAggAUBKAgAAUBKAhAQQAKAlAQgIIAFASgIEA0QWZhiLlldWafRjprzah5wIV83CHRBJlHINfmxueVfcbAjEcqng96qZd43CuiCbKL9swytWJ3eRMYr10LJx33mmiCyvYXm+dSlM/v3ZugcFWWGzXCcb8QTVDxa6ZvQdg9bdz92PEJmE3l4w6JJUhdD9vsTd7WDs3f7k1oSO1ggbhD4jbzzT4JC1og7pC4gpr6QfoQk487JLKgb29ylWlfkGTcIbEEmZ9dqeebSDXHWtACcYfEa8X0k5VywQ5d24qJxx0S7xBTNxzWC/VLeyZQzjslaA8x8bhDeLIKoCAABQEoCEBBAAoCUBCAggAUBKAgAAUBKAhAQQAKAlAQgIIAFASgIAAFASgIQEEACgJQEICCABQEoCDAqgWdv896CooIKxKkn+zRv9tlkYHnBusbOzabTLhJZjDrEjTY0+L5n+//7tGuLylHsV5Bp/2xOcTg7a3vStD59z/V4uayPXROe71yRe+itvPHXt2isf3YCFLJvv21b4+16suW6t3LTy2p/fJ8+HHI5t0Vu09cQXpJavn01uxhbhaHVdnxIki/vXz88tMI2mfmsUP6j3p0TH9L++q+PB+a+OUGF1DV5gld5o9el9ouI7wS1C09VIVjp/9VG5QvH2ZxnVrI2tvSvrovdfwTrLumElnQ0S7QVQeQudjiWpD9uDYXquR2GeJTu07zakv76n15lKyZEghq77J2NPc3P14Lsh/Xuh9UdOt6rSBTXLoth4JsjE0LGlQPhTomhoLaj2stSC3wHQqyR0+75f2VoOFv11Zyu2fdd80bVZ18/9Be9LreXh102fJmHbRxQaaFKdprBir1yC6179mxdWU/1q3YT91mqXW9/VbskuSo6/yrVmzrgnQ/SNWyqjZSu6rq4h+mPBRNP8h+rCuanSpcqn+kt7T9oDaJjld86QdtV5AvbUdRrMkOYdWCDBQEoKBVQ0EACgJQEICCABQEoCAABQEoCEBBAAoCUBCAggAUBKAgAAUBKAhAQQAKAlAQgIIA/wPP2gviq3N3EwAAAABJRU5ErkJggg==" /><!-- --></p>
+<p>Comparing this to the <span class="math inline">\(Z_{\alpha}\)</span> graph in the earlier example, we can see that the value of <span class="math inline">\(Z_{\beta}\)</span> decreases where <span class="math inline">\(Z_{\alpha}\)</span> increases. This could indicate that, if there is a sweep at this locus, it is near-fixation.</p>
+<p>There is an equivalent Zbeta function for each of the Zalpha variations. Here is an example for each of them:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="kw">Zbeta_expected</span>(snps<span class="op">$</span>bp_positions, <span class="dv">3000</span>, snps<span class="op">$</span>cM_distances,</span>
+<span id="cb9-2"><a href="#cb9-2"></a>               LDprofile<span class="op">$</span>bin, LDprofile<span class="op">$</span>rsq)</span>
+<span id="cb9-3"><a href="#cb9-3"></a><span class="co">#&gt; $position</span></span>
+<span id="cb9-4"><a href="#cb9-4"></a><span class="co">#&gt;  [1]  100  200  300  400  500  600  700  800  900 1000 1100 1200 1300 1400 1500</span></span>
+<span id="cb9-5"><a href="#cb9-5"></a><span class="co">#&gt; [16] 1600 1700 1800 1900 2000</span></span>
+<span id="cb9-6"><a href="#cb9-6"></a><span class="co">#&gt; </span></span>
+<span id="cb9-7"><a href="#cb9-7"></a><span class="co">#&gt; $Zbeta_expected</span></span>
+<span id="cb9-8"><a href="#cb9-8"></a><span class="co">#&gt;  [1]         NA         NA         NA         NA 0.07935940 0.07840546</span></span>
+<span id="cb9-9"><a href="#cb9-9"></a><span class="co">#&gt;  [7] 0.07845889 0.07726474 0.07734390 0.07801402 0.07743300 0.07714027</span></span>
+<span id="cb9-10"><a href="#cb9-10"></a><span class="co">#&gt; [13] 0.07798668 0.07880907 0.08001374 0.08138610         NA         NA</span></span>
+<span id="cb9-11"><a href="#cb9-11"></a><span class="co">#&gt; [19]         NA         NA</span></span>
+<span id="cb9-12"><a href="#cb9-12"></a><span class="kw">Zbeta_rsq_over_expected</span>(snps<span class="op">$</span>bp_positions, <span class="dv">3000</span>, <span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>]), snps<span class="op">$</span>cM_distances, </span>
+<span id="cb9-13"><a href="#cb9-13"></a>                        LDprofile<span class="op">$</span>bin, LDprofile<span class="op">$</span>rsq)</span>
+<span id="cb9-14"><a href="#cb9-14"></a><span class="co">#&gt; $position</span></span>
+<span id="cb9-15"><a href="#cb9-15"></a><span class="co">#&gt;  [1]  100  200  300  400  500  600  700  800  900 1000 1100 1200 1300 1400 1500</span></span>
+<span id="cb9-16"><a href="#cb9-16"></a><span class="co">#&gt; [16] 1600 1700 1800 1900 2000</span></span>
+<span id="cb9-17"><a href="#cb9-17"></a><span class="co">#&gt; </span></span>
+<span id="cb9-18"><a href="#cb9-18"></a><span class="co">#&gt; $Zbeta_rsq_over_expected</span></span>
+<span id="cb9-19"><a href="#cb9-19"></a><span class="co">#&gt;  [1]       NA       NA       NA       NA 1.662441 1.753478 1.628663 1.463948</span></span>
+<span id="cb9-20"><a href="#cb9-20"></a><span class="co">#&gt;  [9] 1.543292 1.559820 1.468623 1.689309 1.687198 1.759164 1.737935 1.934010</span></span>
+<span id="cb9-21"><a href="#cb9-21"></a><span class="co">#&gt; [17]       NA       NA       NA       NA</span></span>
+<span id="cb9-22"><a href="#cb9-22"></a><span class="kw">Zbeta_log_rsq_over_expected</span>(snps<span class="op">$</span>bp_positions, <span class="dv">3000</span>, <span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>]), snps<span class="op">$</span>cM_distances, </span>
+<span id="cb9-23"><a href="#cb9-23"></a>                            LDprofile<span class="op">$</span>bin, LDprofile<span class="op">$</span>rsq)</span>
+<span id="cb9-24"><a href="#cb9-24"></a><span class="co">#&gt; $position</span></span>
+<span id="cb9-25"><a href="#cb9-25"></a><span class="co">#&gt;  [1]  100  200  300  400  500  600  700  800  900 1000 1100 1200 1300 1400 1500</span></span>
+<span id="cb9-26"><a href="#cb9-26"></a><span class="co">#&gt; [16] 1600 1700 1800 1900 2000</span></span>
+<span id="cb9-27"><a href="#cb9-27"></a><span class="co">#&gt; </span></span>
+<span id="cb9-28"><a href="#cb9-28"></a><span class="co">#&gt; $Zbeta_log_rsq_over_expected</span></span>
+<span id="cb9-29"><a href="#cb9-29"></a><span class="co">#&gt;  [1]          NA          NA          NA          NA -5.81626185 -6.65751023</span></span>
+<span id="cb9-30"><a href="#cb9-30"></a><span class="co">#&gt;  [7] -7.49094344 -6.58013806 -6.69181952 -6.54908550 -7.83646879 -6.18038047</span></span>
+<span id="cb9-31"><a href="#cb9-31"></a><span class="co">#&gt; [13] -7.39743178 -6.45648923 -6.00894964  0.09510038          NA          NA</span></span>
+<span id="cb9-32"><a href="#cb9-32"></a><span class="co">#&gt; [19]          NA          NA</span></span>
+<span id="cb9-33"><a href="#cb9-33"></a><span class="kw">Zbeta_Zscore</span>(snps<span class="op">$</span>bp_positions, <span class="dv">3000</span>, <span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>]), snps<span class="op">$</span>cM_distances, </span>
+<span id="cb9-34"><a href="#cb9-34"></a>             LDprofile<span class="op">$</span>bin, LDprofile<span class="op">$</span>rsq, LDprofile<span class="op">$</span>sd)</span>
+<span id="cb9-35"><a href="#cb9-35"></a><span class="co">#&gt; $position</span></span>
+<span id="cb9-36"><a href="#cb9-36"></a><span class="co">#&gt;  [1]  100  200  300  400  500  600  700  800  900 1000 1100 1200 1300 1400 1500</span></span>
+<span id="cb9-37"><a href="#cb9-37"></a><span class="co">#&gt; [16] 1600 1700 1800 1900 2000</span></span>
+<span id="cb9-38"><a href="#cb9-38"></a><span class="co">#&gt; </span></span>
+<span id="cb9-39"><a href="#cb9-39"></a><span class="co">#&gt; $Zbeta_Zscore</span></span>
+<span id="cb9-40"><a href="#cb9-40"></a><span class="co">#&gt;  [1]        NA        NA        NA        NA 0.2644152 0.2959959 0.2473133</span></span>
+<span id="cb9-41"><a href="#cb9-41"></a><span class="co">#&gt;  [8] 0.1761311 0.2115564 0.2148552 0.1755580 0.2596216 0.2590911 0.2916302</span></span>
+<span id="cb9-42"><a href="#cb9-42"></a><span class="co">#&gt; [15] 0.2848765 0.3617791        NA        NA        NA        NA</span></span>
+<span id="cb9-43"><a href="#cb9-43"></a><span class="kw">Zbeta_BetaCDF</span>(snps<span class="op">$</span>bp_positions, <span class="dv">3000</span>, <span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>]), snps<span class="op">$</span>cM_distances, </span>
+<span id="cb9-44"><a href="#cb9-44"></a>              LDprofile<span class="op">$</span>bin, LDprofile<span class="op">$</span>Beta_a, LDprofile<span class="op">$</span>Beta_b)</span>
+<span id="cb9-45"><a href="#cb9-45"></a><span class="co">#&gt; $position</span></span>
+<span id="cb9-46"><a href="#cb9-46"></a><span class="co">#&gt;  [1]  100  200  300  400  500  600  700  800  900 1000 1100 1200 1300 1400 1500</span></span>
+<span id="cb9-47"><a href="#cb9-47"></a><span class="co">#&gt; [16] 1600 1700 1800 1900 2000</span></span>
+<span id="cb9-48"><a href="#cb9-48"></a><span class="co">#&gt; </span></span>
+<span id="cb9-49"><a href="#cb9-49"></a><span class="co">#&gt; $Zbeta_BetaCDF</span></span>
+<span id="cb9-50"><a href="#cb9-50"></a><span class="co">#&gt;  [1]        NA        NA        NA        NA 0.5904780 0.5810107 0.5627583</span></span>
+<span id="cb9-51"><a href="#cb9-51"></a><span class="co">#&gt;  [8] 0.5507821 0.5595338 0.5637204 0.5466796 0.5865750 0.5672179 0.5854016</span></span>
+<span id="cb9-52"><a href="#cb9-52"></a><span class="co">#&gt; [15] 0.5899818 0.6315494        NA        NA        NA        NA</span></span></code></pre></div>
+</div>
+<div id="diversity-statistics-lr-and-l_plus_r" class="section level2">
+<h2>Diversity statistics LR and L_plus_R</h2>
+<p>These statistics show the diversity around the target locus. LR calculates the number of SNPs to the left of the target locus multiplied by the number of SNPs to the right. L_plus_R is the total number of pairs of SNPs on the left and the right of the target locus. The idea behind these statistics is that if the diversity is low, there might be a sweep in this region.</p>
+<p>Care should be taken when interpreting these statistics if diversity has been altered by filtering and, when using the Zalpha_all function below, the use of minRL and minRandL parameters.</p>
 </div>
 <div id="zalpha_all" class="section level2">
 <h2>Zalpha_all</h2>
-<p>Zalpha_all is the recommended function for using this package. It will run all the statistics included in the package (<span class="math inline">\(Z_{\alpha}\)</span> and <span class="math inline">\(Z_{\beta}\)</span> variations), so the user does not have to run multiple functions to achieve all the statistics they want. The function will only calculate the statistics it has been given the appropriate inputs for, so it is flexible.</p>
-<p>For example, this code will only run Zalpha, Zbeta and the two diversity statistics LR and L_plus_R, as an LDprofile was not supplied:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw">Zalpha_all</span>(snps<span class="op">$</span>positions,<span class="dv">3000</span>,<span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>]))</a>
-<a class="sourceLine" id="cb6-2" title="2"><span class="co">#&gt; $position</span></a>
-<a class="sourceLine" id="cb6-3" title="3"><span class="co">#&gt;  [1]  100  200  300  400  500  600  700  800  900 1000 1100 1200 1300 1400 1500</span></a>
-<a class="sourceLine" id="cb6-4" title="4"><span class="co">#&gt; [16] 1600 1700 1800 1900 2000</span></a>
-<a class="sourceLine" id="cb6-5" title="5"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb6-6" title="6"><span class="co">#&gt; $LR</span></a>
-<a class="sourceLine" id="cb6-7" title="7"><span class="co">#&gt;  [1] NA NA NA NA 60 70 78 84 88 90 90 88 84 78 70 60 NA NA NA NA</span></a>
-<a class="sourceLine" id="cb6-8" title="8"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb6-9" title="9"><span class="co">#&gt; $L_plus_R</span></a>
-<a class="sourceLine" id="cb6-10" title="10"><span class="co">#&gt;  [1]  NA  NA  NA  NA 111 101  93  87  83  81  81  83  87  93 101 111  NA  NA  NA</span></a>
-<a class="sourceLine" id="cb6-11" title="11"><span class="co">#&gt; [20]  NA</span></a>
-<a class="sourceLine" id="cb6-12" title="12"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb6-13" title="13"><span class="co">#&gt; $Zalpha</span></a>
-<a class="sourceLine" id="cb6-14" title="14"><span class="co">#&gt;  [1]         NA         NA         NA         NA 0.09893585 0.10944106</span></a>
-<a class="sourceLine" id="cb6-15" title="15"><span class="co">#&gt;  [7] 0.11602964 0.11215782 0.12419556 0.12962040 0.12583275 0.11980489</span></a>
-<a class="sourceLine" id="cb6-16" title="16"><span class="co">#&gt; [13] 0.10802033 0.12064462 0.10873917 0.10267168         NA         NA</span></a>
-<a class="sourceLine" id="cb6-17" title="17"><span class="co">#&gt; [19]         NA         NA</span></a>
-<a class="sourceLine" id="cb6-18" title="18"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb6-19" title="19"><span class="co">#&gt; $Zbeta</span></a>
-<a class="sourceLine" id="cb6-20" title="20"><span class="co">#&gt;  [1]        NA        NA        NA        NA 0.1280042 0.1298619 0.1219965</span></a>
-<a class="sourceLine" id="cb6-21" title="21"><span class="co">#&gt;  [8] 0.1071535 0.1124896 0.1121871 0.1033178 0.1185118 0.1212802 0.1281512</span></a>
-<a class="sourceLine" id="cb6-22" title="22"><span class="co">#&gt; [15] 0.1275420 0.1442328        NA        NA        NA        NA</span></a></code></pre></div>
-<p>Supplying an LDprofile will result in more of the statistics being calculated.</p>
-<p>There are many ways that the resulting statistics can be combined to give new insights into the data, see Jacobs et al. (2016).</p>
+<p><strong>Zalpha_all is the recommended function for using this package.</strong> It will run all the statistics included in the package (<span class="math inline">\(Z_{\alpha}\)</span> and <span class="math inline">\(Z_{\beta}\)</span> variations), so the user does not have to run multiple functions to calculate all the statistics they want. The function will only calculate the statistics it has been given the appropriate inputs for, so it is flexible.</p>
+<p>For example, this code will only run Zalpha, Zbeta and the two diversity statistics LR and L_plus_R, as an LD profile was not supplied:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="kw">Zalpha_all</span>(snps<span class="op">$</span>bp_positions,<span class="dv">3000</span>,<span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>]))</span>
+<span id="cb10-2"><a href="#cb10-2"></a><span class="co">#&gt; $position</span></span>
+<span id="cb10-3"><a href="#cb10-3"></a><span class="co">#&gt;  [1]  100  200  300  400  500  600  700  800  900 1000 1100 1200 1300 1400 1500</span></span>
+<span id="cb10-4"><a href="#cb10-4"></a><span class="co">#&gt; [16] 1600 1700 1800 1900 2000</span></span>
+<span id="cb10-5"><a href="#cb10-5"></a><span class="co">#&gt; </span></span>
+<span id="cb10-6"><a href="#cb10-6"></a><span class="co">#&gt; $LR</span></span>
+<span id="cb10-7"><a href="#cb10-7"></a><span class="co">#&gt;  [1] NA NA NA NA 60 70 78 84 88 90 90 88 84 78 70 60 NA NA NA NA</span></span>
+<span id="cb10-8"><a href="#cb10-8"></a><span class="co">#&gt; </span></span>
+<span id="cb10-9"><a href="#cb10-9"></a><span class="co">#&gt; $L_plus_R</span></span>
+<span id="cb10-10"><a href="#cb10-10"></a><span class="co">#&gt;  [1]  NA  NA  NA  NA 111 101  93  87  83  81  81  83  87  93 101 111  NA  NA  NA</span></span>
+<span id="cb10-11"><a href="#cb10-11"></a><span class="co">#&gt; [20]  NA</span></span>
+<span id="cb10-12"><a href="#cb10-12"></a><span class="co">#&gt; </span></span>
+<span id="cb10-13"><a href="#cb10-13"></a><span class="co">#&gt; $Zalpha</span></span>
+<span id="cb10-14"><a href="#cb10-14"></a><span class="co">#&gt;  [1]         NA         NA         NA         NA 0.09893585 0.10944106</span></span>
+<span id="cb10-15"><a href="#cb10-15"></a><span class="co">#&gt;  [7] 0.11602964 0.11215782 0.12419556 0.12962040 0.12583275 0.11980489</span></span>
+<span id="cb10-16"><a href="#cb10-16"></a><span class="co">#&gt; [13] 0.10802033 0.12064462 0.10873917 0.10267168         NA         NA</span></span>
+<span id="cb10-17"><a href="#cb10-17"></a><span class="co">#&gt; [19]         NA         NA</span></span>
+<span id="cb10-18"><a href="#cb10-18"></a><span class="co">#&gt; </span></span>
+<span id="cb10-19"><a href="#cb10-19"></a><span class="co">#&gt; $Zbeta</span></span>
+<span id="cb10-20"><a href="#cb10-20"></a><span class="co">#&gt;  [1]        NA        NA        NA        NA 0.1280042 0.1298619 0.1219965</span></span>
+<span id="cb10-21"><a href="#cb10-21"></a><span class="co">#&gt;  [8] 0.1071535 0.1124896 0.1121871 0.1033178 0.1185118 0.1212802 0.1281512</span></span>
+<span id="cb10-22"><a href="#cb10-22"></a><span class="co">#&gt; [15] 0.1275420 0.1442328        NA        NA        NA        NA</span></span></code></pre></div>
+<p>Supplying an LD profile and genetic distances for each SNP will result in more of the statistics being calculated.</p>
+<p>There are many ways that the resulting statistics can be combined to give new insights into the data, see Jacobs et al. (2016)[1].</p>
 </div>
 <div id="identifying-regions-under-selection" class="section level2">
 <h2>Identifying regions under selection</h2>
-<p>To find candidate regions for selection, first calculate the statistics across the chromosome, including any combined statistics that may be of interest. It is then suggested to find the maximum value for windows of around 200 Kb for each statistic (minimum values for the diversity statistics). Any regions which are outliers compared to the rest of the chromosome could be considered candidates and can be investigated further.</p>
+<p>To find candidate regions for selection, first calculate the statistics across the chromosome, including any combined statistics that may be of interest. It is then suggested to find the maximum value for windows of around 200 Kb for each statistic (minimum values for the diversity statistics). Any regions that are outliers compared to the rest of the chromosome could be considered candidates and can be investigated further.</p>
+</div>
+<div id="create_ldprofile" class="section level2">
+<h2>create_LDprofile</h2>
+<p>An LD profile is required to adjust for expected correlations. It is a basic look-up table that tells the user what the expected correlation is between a pair of SNPs, given the genetic distance between them. To create a simple LD profile, the user just needs two things:</p>
+<ul>
+<li><p><strong>dist</strong> a vector of genetic distances</p></li>
+<li><p><strong>x</strong> a matrix of SNP values</p></li>
+</ul>
+<p>The user also needs to tell the function what bin_size to use, and optionally if they want to calculate Beta distribution parameters (this requires the fitdistrplus package to be installed).</p>
+<p>The function considers all pairs of SNPs. It separates the pairs of SNPs into bins based on the genetic distance between them. The correlation between each pair of SNPs is calculated. In each bin, the average and the standard deviation of these correlations is calculated. If beta_params=TRUE, then a beta distribution will be fitted to the correlations in each bin too.</p>
+<p>We can use the snps dataset as an example of this:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="kw">create_LDprofile</span>(snps<span class="op">$</span>cM_distances,<span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>]),<span class="dt">bin_size =</span> <span class="fl">0.001</span>,<span class="dt">beta_params =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb11-2"><a href="#cb11-2"></a><span class="co">#&gt;     bin        rsq        sd    Beta_a   Beta_b  n</span></span>
+<span id="cb11-3"><a href="#cb11-3"></a><span class="co">#&gt; 1 0.000 0.10226664 0.1318628 0.8232427 6.435184 59</span></span>
+<span id="cb11-4"><a href="#cb11-4"></a><span class="co">#&gt; 2 0.001 0.14412346 0.1745857 0.7323277 3.960080 51</span></span>
+<span id="cb11-5"><a href="#cb11-5"></a><span class="co">#&gt; 3 0.002 0.09538328 0.1122312 0.9962786 8.322913 41</span></span>
+<span id="cb11-6"><a href="#cb11-6"></a><span class="co">#&gt; 4 0.003 0.11193736 0.1303776 1.0432924 7.113517 28</span></span>
+<span id="cb11-7"><a href="#cb11-7"></a><span class="co">#&gt; 5 0.004 0.19393939 0.1963924 1.4733393 4.979831 11</span></span></code></pre></div>
+<p>This code has created an LD profile with 6 columns. These are:</p>
+<ul>
+<li><p><strong>bin</strong> This is the lower bound of the bin, e.g. row one shows information for genetic distances that are between 0 and 0.001 cM.</p></li>
+<li><p><strong>rsq</strong> This is the expected r<sup>2</sup> for genetic distances who fall in the given bin. For example, in row one the expected r<sup>2</sup> value for SNPs which are 0-0.001 cM apart is 0.1023.</p></li>
+<li><p><strong>sd</strong> This is the standard deviation for the r<sup>2</sup> values.</p></li>
+<li><p><strong>Beta_a</strong> This is the first shape parameter for the Beta distribution fitted to this bin</p></li>
+<li><p><strong>Beta_b</strong> This is the second shape parameter for the Beta distribution fitted to this bin</p></li>
+<li><p><strong>n</strong> This is the number of pairs of SNPs with a genetic distance falling within this bin, whose correlations were used to calculate the statistics.</p></li>
+</ul>
+<p>There is one more optional input parameter - max_dist - which sets the maximum distance SNPs can be apart for calculating for the LD profile. For real world data, Jacobs et al. (2016)[1] recommend using distances up to 2 cM assigned to bins of size 0.0001 cM.</p>
+<p>Ideally, we would want to generate an LD profile based on genetic data without selection but exactly matching the other population parameters for our data. This could be done using simulated data (using software such as MSMS[6] or SLiM[7]). We could use another genetic dataset containing a similar population. Alternatively, we could generate an LD profile using the same dataset that we are analysing for selection. Care should be taken that bins are big enough to have a lot of data in so expected r<sup>2</sup> values are not overly affected by outliers.</p>
+<p>Realistically, the user will not have just one chromosome of data for creating the LD profile, but will likely have a whole genome. So far, we have used a vector of genetic distances and a SNP value matrix in our example. However, with multiple chromosomes there will be a vector of genetic distances and a SNP value matrix for each chromosome, and it would be good to use all that information to create the LD profile. Therefore, the function has been written to accept multiple vectors of genetic distances and multiple SNP value matrices via lists.</p>
+<p>The <strong>dist</strong> parameter will accept a vector or a list of vectors.</p>
+<p>The <strong>x</strong> parameter will accept a matrix or a list of matrices.</p>
+<p>For example, if we use the snps dataset but this time pretend it is three different chromosomes.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="co">## Generate three chromosomes of data - cM distances and SNP values</span></span>
+<span id="cb12-2"><a href="#cb12-2"></a>chrom1_cM_distances&lt;-snps<span class="op">$</span>cM_distances</span>
+<span id="cb12-3"><a href="#cb12-3"></a>chrom1_snp_values&lt;-<span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>])</span>
+<span id="cb12-4"><a href="#cb12-4"></a></span>
+<span id="cb12-5"><a href="#cb12-5"></a>chrom2_cM_distances&lt;-snps<span class="op">$</span>cM_distances</span>
+<span id="cb12-6"><a href="#cb12-6"></a>chrom2_snp_values&lt;-<span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>])</span>
+<span id="cb12-7"><a href="#cb12-7"></a></span>
+<span id="cb12-8"><a href="#cb12-8"></a>chrom3_cM_distances&lt;-snps<span class="op">$</span>cM_distances</span>
+<span id="cb12-9"><a href="#cb12-9"></a>chrom3_snp_values&lt;-<span class="kw">as.matrix</span>(snps[,<span class="dv">3</span><span class="op">:</span><span class="dv">12</span>])</span>
+<span id="cb12-10"><a href="#cb12-10"></a></span>
+<span id="cb12-11"><a href="#cb12-11"></a><span class="co">## create a list of the cM distances</span></span>
+<span id="cb12-12"><a href="#cb12-12"></a>cM_distances_list&lt;-<span class="kw">list</span>(chrom1_cM_distances,chrom2_cM_distances,chrom3_cM_distances)</span>
+<span id="cb12-13"><a href="#cb12-13"></a></span>
+<span id="cb12-14"><a href="#cb12-14"></a><span class="co">## create a list of SNP value matrices</span></span>
+<span id="cb12-15"><a href="#cb12-15"></a>snp_values_list&lt;-<span class="kw">list</span>(chrom1_snp_values,chrom2_snp_values,chrom3_snp_values)</span>
+<span id="cb12-16"><a href="#cb12-16"></a></span>
+<span id="cb12-17"><a href="#cb12-17"></a><span class="co">## create the LD profile using the lists as the dist and x parameters</span></span>
+<span id="cb12-18"><a href="#cb12-18"></a><span class="kw">create_LDprofile</span>(cM_distances_list,snp_values_list,<span class="dt">bin_size =</span> <span class="fl">0.001</span>,<span class="dt">beta_params =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb12-19"><a href="#cb12-19"></a><span class="co">#&gt;     bin        rsq        sd    Beta_a   Beta_b   n</span></span>
+<span id="cb12-20"><a href="#cb12-20"></a><span class="co">#&gt; 1 0.000 0.10226664 0.1311114 0.6691595 5.517397 177</span></span>
+<span id="cb12-21"><a href="#cb12-21"></a><span class="co">#&gt; 2 0.001 0.14412346 0.1734333 0.5921975 3.371973 153</span></span>
+<span id="cb12-22"><a href="#cb12-22"></a><span class="co">#&gt; 3 0.002 0.09538328 0.1113074 0.7402206 6.697932 123</span></span>
+<span id="cb12-23"><a href="#cb12-23"></a><span class="co">#&gt; 4 0.003 0.11193736 0.1287972 0.7396069 5.557230  84</span></span>
+<span id="cb12-24"><a href="#cb12-24"></a><span class="co">#&gt; 5 0.004 0.19393939 0.1901561 1.0279480 3.889066  33</span></span></code></pre></div>
+<p>Care should be taken that the chromosomes stay in the same order in each list.</p>
+<p>Congratulations! You should now be able to create your own LD profile and use the Zalpha package.</p>
 </div>
 <div id="references" class="section level2">
 <h2>References</h2>
-<p>Jacobs, G.S., T.J. Sluckin, and T. Kivisild, <em>Refining the Use of Linkage Disequilibrium as a Robust Signature of Selective Sweeps.</em> Genetics, 2016. <strong>203</strong>(4): p. 1807</p>
+<p>[1] Jacobs, G.S., Sluckin, T.J., and Kivisild, T. <em>Refining the Use of Linkage Disequilibrium as a Robust Signature of Selective Sweeps.</em> Genetics, 2016. <strong>203</strong>(4): p. 1807</p>
+<p>[2] McVean, G. A. T., Myers, S. R., Hunt, S., Deloukas, P., Bentley, D. R., and Donnelly, P. <em>The Fine-Scale Structure of Recombination Rate Variation in the Human Genome.</em> Science, 2004. <strong>304</strong>(5670): 581-584.</p>
+<p>[3] Spence, J.P. and Song, Y.S. <em>Inference and analysis of population-specific fine-scale recombination maps across 26 diverse human populations.</em> Science Advances, 2019. <strong>5</strong>(10): eaaw9206.</p>
+<p>[4] Gao, F., Ming, C., Hu, W. J., and Li, H. P. <em>New Software for the Fast Estimation of Population Recombination Rates (FastEPRR) in the Genomic Era.</em> G3-Genes Genomes Genetics, 2016. <strong>6</strong>(6): 1563-1571.</p>
+<p>[5] Hermann, P., Heissl, A., Tiemann-Boege, I., and Futschik, A. <em>LDJump: Estimating variable recombination rates from population genetic data.</em> Molecular Ecology Resources, 2019. <strong>19</strong>(3): 623-638.</p>
+<p>[6] Ewing, G. and Hermisson, J. <em>MSMS: a coalescent simulation program including recombination, demographic structure and selection at a single locus.</em> Bioinformatics, 2010. <strong>26</strong>(16):2064-2065.</p>
+<p>[7] Haller, B.C. and Messer, P.W. <em>SLiM 3: Forward Genetic Simulations Beyond the Wright–Fisher Model.</em> Molecular Biology and Evolution, 2019. <strong>36</strong>(3):632-637.</p>
 </div>
 
 

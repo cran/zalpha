@@ -13,9 +13,10 @@
 #' The LD profile describes the expected correlation between SNPs at a given genetic distance, generated using simulations or
 #' real data. Care should be taken to utilise an LD profile that is representative of the population in question. The LD
 #' profile should consist of evenly sized bins of distances (for example 0.0001 cM per bin), where the value given is the (inclusive) lower
-#' bound of the bin.
+#' bound of the bin. Ideally, an LD profile would be generated using data from a null population with no selection, however one can be generated
+#' using this data. See the \code{\link{create_LDprofile}} function for more information on how to create an LD profile.
 #'
-#' @importFrom stats cor
+#' @importFrom stats cor na.omit
 #'
 #' @param pos A numeric vector of SNP locations
 #' @param ws The window size which the \eqn{Z_{\beta}^{r^2/E[r^2]}}{Zbeta} statistic will be calculated over. This should be on the same scale as the \code{pos} vector.
@@ -34,13 +35,14 @@
 #' data(snps)
 #' data(LDprofile)
 #' ## run Zbeta_rsq_over_expected over all the SNPs with a window size of 3000 bp
-#' Zbeta_rsq_over_expected(snps$positions,3000,as.matrix(snps[,3:12]),snps$distances,
+#' Zbeta_rsq_over_expected(snps$bp_positions,3000,as.matrix(snps[,3:12]),snps$cM_distances,
 #'  LDprofile$bin,LDprofile$rsq)
 #' ## only return results for SNPs between locations 600 and 1500 bp
-#' Zbeta_rsq_over_expected(snps$positions,3000,as.matrix(snps[,3:12]),snps$distances,
+#' Zbeta_rsq_over_expected(snps$bp_positions,3000,as.matrix(snps[,3:12]),snps$cM_distances,
 #'  LDprofile$bin,LDprofile$rsq,X=c(600,1500))
 #'
 #' @export
+#' @seealso \code{\link{create_LDprofile}}
 Zbeta_rsq_over_expected<-function(pos, ws, x, dist, LDprofile_bins, LDprofile_rsq, minRandL = 4, minRL = 25, X = NULL){
 
   #Check things are in the correct format
@@ -58,7 +60,7 @@ Zbeta_rsq_over_expected<-function(pos, ws, x, dist, LDprofile_bins, LDprofile_rs
     stop("The number of rows in x must equal the number of SNP locations given in pos")
   }
   #Check SNPs are all biallelic
-  if(sum(apply(x,1,function(x){length(unique(x))}) != 2)>0){
+  if(sum(apply(x,1,function(x){length(na.omit(unique(x)))}) != 2)>0){
     stop("SNPs must all be biallelic")
   }
   #Check dist is a numeric vector
@@ -153,7 +155,7 @@ Zbeta_rsq_over_expected<-function(pos, ws, x, dist, LDprofile_bins, LDprofile_rs
 
       # Find distances between each SNP in L and round to bin size
       bins<-sapply(outer(dist[pos<=currentPos+ws/2 & pos > currentPos],dist[pos>=currentPos-ws/2 & pos < currentPos],"-"),assign_bins,bin_size=bin_size)
-      rsq<-as.vector(t((cor(t(x[pos>=currentPos-ws/2 & pos<=currentPos+ws/2,]))^2)[1:noL,(noL+2):(noL+noR+1)]))
+      rsq<-as.vector(t((cor(t(x[pos>=currentPos-ws/2 & pos<=currentPos+ws/2,]),use="pairwise.complete.obs")^2)[1:noL,(noL+2):(noL+noR+1)]))
       rsqExp<-merge(data.frame(bins=as.character(bins),rsq),data.frame(LDprofile_bins=as.character(LDprofile_bins),LDprofile_rsq),by.x="bins",by.y="LDprofile_bins",all.x=TRUE,sort=FALSE)
       rsqSum<-sum(rsqExp$rsq/rsqExp$LDprofile_rsq)
       outputList$Zbeta_rsq_over_expected[i]<-rsqSum/(noL*noR)

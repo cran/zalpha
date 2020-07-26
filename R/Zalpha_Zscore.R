@@ -13,9 +13,10 @@
 #' The LD profile describes the expected correlation between SNPs at a given genetic distance, generated using simulations or
 #' real data. Care should be taken to utilise an LD profile that is representative of the population in question. The LD
 #' profile should consist of evenly sized bins of distances (for example 0.0001 cM per bin), where the value given is the (inclusive) lower
-#' bound of the bin.
+#' bound of the bin. Ideally, an LD profile would be generated using data from a null population with no selection, however one can be generated
+#' using this data. See the \code{\link{create_LDprofile}} function for more information on how to create an LD profile.
 #'
-#' @importFrom stats cor
+#' @importFrom stats cor na.omit
 #'
 #' @param pos A numeric vector of SNP locations
 #' @param ws The window size which the \eqn{Z_{\alpha}^{Zscore}}{Zalpha} statistic will be calculated over. This should be on the same scale as the \code{pos} vector.
@@ -35,13 +36,14 @@
 #' data(snps)
 #' data(LDprofile)
 #' ## run Zalpha_Zscore over all the SNPs with a window size of 3000 bp
-#' Zalpha_Zscore(snps$positions,3000,as.matrix(snps[,3:12]),snps$distances,
+#' Zalpha_Zscore(snps$bp_positions,3000,as.matrix(snps[,3:12]),snps$cM_distances,
 #'  LDprofile$bin,LDprofile$rsq,LDprofile$sd)
 #' ## only return results for SNPs between locations 600 and 1500 bp
-#' Zalpha_Zscore(snps$positions,3000,as.matrix(snps[,3:12]),snps$distances,
+#' Zalpha_Zscore(snps$bp_positions,3000,as.matrix(snps[,3:12]),snps$cM_distances,
 #'  LDprofile$bin,LDprofile$rsq,LDprofile$sd,X=c(600,1500))
 #'
 #' @export
+#' @seealso \code{\link{create_LDprofile}}
 Zalpha_Zscore<-function(pos, ws, x, dist, LDprofile_bins, LDprofile_rsq, LDprofile_sd, minRandL = 4, minRL = 25, X = NULL){
 
   #Check things are in the correct format
@@ -59,7 +61,7 @@ Zalpha_Zscore<-function(pos, ws, x, dist, LDprofile_bins, LDprofile_rsq, LDprofi
     stop("The number of rows in x must equal the number of SNP locations given in pos")
   }
   #Check SNPs are all biallelic
-  if(sum(apply(x,1,function(x){length(unique(x))}) != 2)>0){
+  if(sum(apply(x,1,function(x){length(na.omit(unique(x)))}) != 2)>0){
     stop("SNPs must all be biallelic")
   }
   #Check dist is a numeric vector
@@ -162,12 +164,12 @@ Zalpha_Zscore<-function(pos, ws, x, dist, LDprofile_bins, LDprofile_rsq, LDprofi
       ##Left
       # Find distances between each SNP in L and round to bin size
       bins<-sapply(lower_triangle(outer(dist[pos>=currentPos-ws/2 & pos < currentPos],dist[pos>=currentPos-ws/2 & pos < currentPos],"-")),assign_bins,bin_size=bin_size)
-      Lrsq<- lower_triangle(cor(t(x[pos>=currentPos-ws/2 & pos < currentPos,]))^2)
+      Lrsq<- lower_triangle(cor(t(x[pos>=currentPos-ws/2 & pos < currentPos,]),use="pairwise.complete.obs")^2)
       LrsqExp<-merge(data.frame(bins=as.character(bins),Lrsq),data.frame(LDprofile_bins=as.character(LDprofile_bins),LDprofile_rsq,LDprofile_sd),by.x="bins",by.y="LDprofile_bins",all.x=TRUE,sort=FALSE)
       LrsqSum<-sum((LrsqExp$Lrsq-LrsqExp$LDprofile_rsq)/LrsqExp$LDprofile_sd)
       ##Right
       bins<-sapply(lower_triangle(outer(dist[pos<=currentPos+ws/2 & pos > currentPos],dist[pos<=currentPos+ws/2 & pos > currentPos],"-")),assign_bins,bin_size=bin_size)
-      Rrsq<-lower_triangle(cor(t(x[pos<=currentPos+ws/2 & pos > currentPos,]))^2)
+      Rrsq<-lower_triangle(cor(t(x[pos<=currentPos+ws/2 & pos > currentPos,]),use="pairwise.complete.obs")^2)
       RrsqExp<-merge(data.frame(bins=as.character(bins),Rrsq),data.frame(LDprofile_bins=as.character(LDprofile_bins),LDprofile_rsq,LDprofile_sd),by.x="bins",by.y="LDprofile_bins",all.x=TRUE,sort=FALSE)
       RrsqSum<-sum((RrsqExp$Rrsq-RrsqExp$LDprofile_rsq)/RrsqExp$LDprofile_sd)
 

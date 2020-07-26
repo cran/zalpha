@@ -11,9 +11,14 @@
 #'   \item For \code{\link{Zalpha_Zscore}} and \code{\link{Zbeta_Zscore}} to be calculated, the parameter \code{LDprofile_sd} must also be supplied.
 #'   \item For \code{\link{Zalpha_BetaCDF}} and \code{\link{Zbeta_BetaCDF}} to be calculated, the parameters \code{LDprofile_Beta_a} and \code{LDprofile_Beta_b} must also be supplied.
 #' }
+#' The LD profile describes the expected correlation between SNPs at a given genetic distance, generated using simulations or
+#' real data. Care should be taken to utilise an LD profile that is representative of the population in question. The LD
+#' profile should consist of evenly sized bins of distances (for example 0.0001 cM per bin), where the value given is the (inclusive) lower
+#' bound of the bin. Ideally, an LD profile would be generated using data from a null population with no selection, however one can be generated
+#' using this data. See the \code{\link{create_LDprofile}} function for more information on how to create an LD profile.
 #' For more information about the statistics, please see Jacobs (2016).
 #'
-#' @importFrom stats cor pbeta
+#' @importFrom stats cor pbeta na.omit
 #'
 #' @param pos A numeric vector of SNP locations
 #' @param ws The window size which the statistics will be calculated over. This should be on the same scale as the \code{pos} vector.
@@ -36,16 +41,16 @@
 #' data(LDprofile)
 #' ## run Zalpha_all over all the SNPs with a window size of 3000 bp
 #' ## will return all 15 statistics
-#' Zalpha_all(snps$positions,3000,as.matrix(snps[,3:12]),snps$distances,
+#' Zalpha_all(snps$bp_positions,3000,as.matrix(snps[,3:12]),snps$cM_distances,
 #'  LDprofile$bin,LDprofile$rsq,LDprofile$sd,LDprofile$Beta_a,LDprofile$Beta_b)
 #' ## only return results for SNPs between locations 600 and 1500 bp
-#' Zalpha_all(snps$positions,3000,as.matrix(snps[,3:12]),snps$distances,
+#' Zalpha_all(snps$bp_positions,3000,as.matrix(snps[,3:12]),snps$cM_distances,
 #'  LDprofile$bin,LDprofile$rsq,LDprofile$sd,LDprofile$Beta_a,LDprofile$Beta_b,X=c(600,1500))
 #' ## will only return statistics not requiring an LD profile
-#'Zalpha_all(snps$positions,3000,as.matrix(snps[,3:12]))
+#'Zalpha_all(snps$bp_positions,3000,as.matrix(snps[,3:12]))
 #'
 #' @export
-#' @seealso \code{\link{Zalpha}} \code{\link{Zalpha_expected}} \code{\link{Zalpha_rsq_over_expected}} \code{\link{Zalpha_log_rsq_over_expected}} \code{\link{Zalpha_Zscore}} \code{\link{Zalpha_BetaCDF}} \code{\link{Zbeta}} \code{\link{Zbeta_expected}} \code{\link{Zbeta_rsq_over_expected}} \code{\link{Zbeta_log_rsq_over_expected}} \code{\link{Zbeta_Zscore}} \code{\link{Zbeta_BetaCDF}} \code{\link{LR}} \code{\link{L_plus_R}}
+#' @seealso \code{\link{Zalpha}}, \code{\link{Zalpha_expected}}, \code{\link{Zalpha_rsq_over_expected}}, \code{\link{Zalpha_log_rsq_over_expected}}, \code{\link{Zalpha_Zscore}}, \code{\link{Zalpha_BetaCDF}}, \code{\link{Zbeta}}, \code{\link{Zbeta_expected}}, \code{\link{Zbeta_rsq_over_expected}}, \code{\link{Zbeta_log_rsq_over_expected}}, \code{\link{Zbeta_Zscore}}, \code{\link{Zbeta_BetaCDF}}, \code{\link{LR}}, \code{\link{L_plus_R}}, \code{\link{create_LDprofile}}.
 
 Zalpha_all <- function(pos, ws, x=NULL, dist=NULL, LDprofile_bins=NULL, LDprofile_rsq=NULL, LDprofile_sd=NULL, LDprofile_Beta_a=NULL, LDprofile_Beta_b=NULL, minRandL = 4, minRL = 25, X = NULL) {
   #Check things are in the correct format
@@ -65,7 +70,7 @@ Zalpha_all <- function(pos, ws, x=NULL, dist=NULL, LDprofile_bins=NULL, LDprofil
       stop("The number of rows in x must equal the number of SNP locations given in pos")
     }
     #Check SNPs are all biallelic
-    if(sum(apply(x,1,function(x){length(unique(x))}) != 2)>0){
+    if(sum(apply(x,1,function(x){length(na.omit(unique(x)))}) != 2)>0){
       stop("SNPs must all be biallelic")
     }
     #Change matrix x to numeric if it isn't already
@@ -215,11 +220,11 @@ Zalpha_all <- function(pos, ws, x=NULL, dist=NULL, LDprofile_bins=NULL, LDprofil
       outputList$L_plus_R[i]<-choose(noL,2)+choose(noR,2)
       if (is.null(x)==FALSE){
         ##Left
-        Lrsq <- lower_triangle(cor(t(x[pos>=currentPos-ws/2 & pos < currentPos,]))^2)
+        Lrsq <- lower_triangle(cor(t(x[pos>=currentPos-ws/2 & pos < currentPos,]),use="pairwise.complete.obs")^2)
         ##Right
-        Rrsq<-lower_triangle(cor(t(x[pos<=currentPos+ws/2 & pos > currentPos,]))^2)
+        Rrsq<-lower_triangle(cor(t(x[pos<=currentPos+ws/2 & pos > currentPos,]),use="pairwise.complete.obs")^2)
         ##Over
-        rsq<-as.vector(t((cor(t(x[pos>=currentPos-ws/2 & pos<=currentPos+ws/2,]))^2)[1:noL,(noL+2):(noL+noR+1)]))
+        rsq<-as.vector(t((cor(t(x[pos>=currentPos-ws/2 & pos<=currentPos+ws/2,]),use="pairwise.complete.obs")^2)[1:noL,(noL+2):(noL+noR+1)]))
         outputList$Zalpha[i]<-(sum(Lrsq)/choose(noL,2)+sum(Rrsq)/choose(noR,2))/2
         outputList$Zbeta[i]<-sum(rsq)/(noL*noR)
       } else {

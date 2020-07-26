@@ -7,7 +7,7 @@
 #' \deqn{Z_{\beta}=\frac{\sum_{i \in L,j \in R}r^2_{i,j}}{|L||R|}}
 #' where \code{|L|} and \code{|R|} are the number of SNPs to the left and right of the current locus within the given window \code{ws}, and \eqn{r^2}{r^2} is equal to the squared correlation between a pair of SNPs
 #'
-#' @importFrom stats cor
+#' @importFrom stats cor na.omit
 #'
 #' @param pos A numeric vector of SNP locations
 #' @param ws The window size which the \eqn{Z_{\beta}}{Zbeta} statistic will be calculated over. This should be on the same scale as the \code{pos} vector.
@@ -22,9 +22,9 @@
 #' ## load the snps example dataset
 #' data(snps)
 #' ## run Zbeta over all the SNPs with a window size of 3000 bp
-#' Zbeta(snps$positions,3000,as.matrix(snps[,3:12]))
+#' Zbeta(snps$bp_positions,3000,as.matrix(snps[,3:12]))
 #' ## only return results for SNPs between locations 600 and 1500 bp
-#' Zbeta(snps$positions,3000,as.matrix(snps[,3:12]),X=c(600,1500))
+#' Zbeta(snps$bp_positions,3000,as.matrix(snps[,3:12]),X=c(600,1500))
 #'
 #' @export
 
@@ -44,7 +44,7 @@ Zbeta <- function(pos, ws, x, minRandL = 4, minRL = 25, X = NULL) {
     stop("The number of rows in x must equal the number of SNP locations given in pos")
   }
   #Check SNPs are all biallelic
-  if(sum(apply(x,1,function(x){length(unique(x))}) != 2)>0){
+  if(sum(apply(x,1,function(x){length(na.omit(unique(x)))}) != 2)>0){
     stop("SNPs must all be biallelic")
   }
   #Check windowsize is a number greater than 0
@@ -101,7 +101,7 @@ Zbeta <- function(pos, ws, x, minRandL = 4, minRL = 25, X = NULL) {
       #NA
       outputList$Zbeta[i]<-NA
     } else {
-      rsqSum<-sum((cor(t(x[pos>=currentPos-ws/2 & pos<=currentPos+ws/2,]))^2)[1:noL,(noL+2):(noL+noR+1)])
+      rsqSum<-sum((cor(t(x[pos>=currentPos-ws/2 & pos<=currentPos+ws/2,]),use="pairwise.complete.obs")^2)[1:noL,(noL+2):(noL+noR+1)])
       outputList$Zbeta[i]<-rsqSum/(noL*noR)
     }
   }

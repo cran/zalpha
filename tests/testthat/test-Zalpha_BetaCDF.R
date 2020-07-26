@@ -48,7 +48,7 @@ test_that("Zalpha_BetaCDF calculates Zalpha_BetaCDF statistic correctly", {
                                   0.396797658473664,
                                   0.393583363498442,
                                   NA,NA,NA,NA)
-               ))
+               ),tolerance=0.0001)
 })
 
 ## Test the function with a different window size
@@ -65,7 +65,7 @@ test_that("Zalpha_BetaCDF calculates Zalpha_BetaCDF statistic correctly with a d
                                   0.325273987256311,
                                   0.319208662374142,
                                   NA,NA,NA,NA,NA)
-               ))
+               ),tolerance=0.0001)
 })
 ## Test the function with a character matrix as x
 
@@ -86,7 +86,7 @@ test_that("Zalpha_BetaCDF calculates Zalpha_BetaCDF statistic correctly with cha
                                   0.396797658473664,
                                   0.393583363498442,
                                   NA,NA,NA,NA)
-               ))
+               ),tolerance=0.0001)
 })
 
 ## Test the function with X supplied as a parameter
@@ -99,7 +99,7 @@ test_that("Zalpha_BetaCDF calculates Zalpha_BetaCDF statistic correctly with X s
                  Zalpha_BetaCDF=c(0.461984646273587,
                                   0.409097872871755,
                                   0.388665184297966)
-               ))
+               ),tolerance=0.0001)
 })
 
 ## Test the function with X supplied as a parameter outside of the region defined in pos
@@ -313,4 +313,22 @@ test_that("Zalpha_BetaCDF fails when LDprofile_bins and LDprofile_Beta_b are dif
                "LDprofile_Beta_b must contain the same number of values as there are bins given in LDprofile_bins")
 })
 
+## test that Zalpha_BetaCDF works with missing value
+df1<-df
+df1$C1[15]<-NA
+test_that("Zalpha_BetaCDF calculates Zalpha_BetaCDF statistic correctly with missing value", {
 
+  expect_equal(Zalpha_BetaCDF(pos = df1$POS, ws  = 3000, x = as.matrix(df1[,3:7]), dist = df1$dist, LDprofile_bins = LDprofile$bin, LDprofile_Beta_a = LDprofile$Beta_a, LDprofile_Beta_b = LDprofile$Beta_b, minRandL = 4, minRL = 25, X = NULL),
+               list(
+                 position=c(100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500),
+                 Zalpha_BetaCDF=c(NA,NA,NA,NA,
+                                  0.514624827235342,
+                                  0.545771193444576,
+                                  0.479196303216273,
+                                  0.426601106081793,
+                                  0.414611369025125,
+                                  0.431252209159130,
+                                  0.453835332399716,
+                                  NA,NA,NA,NA)
+               ),tolerance=0.0001)
+})

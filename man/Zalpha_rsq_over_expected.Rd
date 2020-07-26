@@ -51,20 +51,24 @@ the squared correlation between a pair of SNPs, and \eqn{E[r^2]}{E[r^2]} is equa
 The LD profile describes the expected correlation between SNPs at a given genetic distance, generated using simulations or
 real data. Care should be taken to utilise an LD profile that is representative of the population in question. The LD
 profile should consist of evenly sized bins of distances (for example 0.0001 cM per bin), where the value given is the (inclusive) lower
-bound of the bin.
+bound of the bin. Ideally, an LD profile would be generated using data from a null population with no selection, however one can be generated
+using this data. See the \code{\link{create_LDprofile}} function for more information on how to create an LD profile.
 }
 \examples{
 ## load the snps and LDprofile example datasets
 data(snps)
 data(LDprofile)
 ## run Zalpha_rsq_over_expected over all the SNPs with a window size of 3000 bp
-Zalpha_rsq_over_expected(snps$positions,3000,as.matrix(snps[,3:12]),snps$distances,
+Zalpha_rsq_over_expected(snps$bp_positions,3000,as.matrix(snps[,3:12]),snps$cM_distances,
  LDprofile$bin,LDprofile$rsq)
 ## only return results for SNPs between locations 600 and 1500 bp
-Zalpha_rsq_over_expected(snps$positions,3000,as.matrix(snps[,3:12]),snps$distances,
+Zalpha_rsq_over_expected(snps$bp_positions,3000,as.matrix(snps[,3:12]),snps$cM_distances,
  LDprofile$bin,LDprofile$rsq,X=c(600,1500))
 
 }
 \references{
 Jacobs, G.S., T.J. Sluckin, and T. Kivisild, \emph{Refining the Use of Linkage Disequilibrium as a Robust Signature of Selective Sweeps.} Genetics, 2016. \strong{203}(4): p. 1807
+}
+\seealso{
+\code{\link{create_LDprofile}}
 }

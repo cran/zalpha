@@ -27,7 +27,7 @@ test_that("Zalpha calculates Zalpha statistic correctly", {
                           ((13+97/144)/36+(1+121/144)/10)/2,
                           ((15+25/48)/45+(1+55/144)/6)/2,
                           NA,NA,NA,NA)
-               ))
+               ),tolerance=0.0001)
 })
 
 ## Test the function with a different window size
@@ -44,7 +44,7 @@ test_that("Zalpha calculates Zalpha statistic correctly with a different window 
                           ((2+3/16)/10+(2+7/144)/10)/2,
                           ((2+3/16)/10+(1+121/144)/10)/2,
                           NA,NA,NA,NA,NA)
-               ))
+               ),tolerance=0.0001)
 })
 
 ## Test the function with a character matrix as x
@@ -66,7 +66,7 @@ test_that("Zalpha calculates Zalpha statistic correctly with character matrix", 
                           ((13+97/144)/36+(1+121/144)/10)/2,
                           ((15+25/48)/45+(1+55/144)/6)/2,
                           NA,NA,NA,NA)
-               ))
+               ),tolerance=0.0001)
 })
 
 ## Test the function with X supplied as a parameter
@@ -79,7 +79,7 @@ test_that("Zalpha calculates Zalpha statistic correctly with X supplied", {
                  Zalpha=c(((7+31/72)/15+(7+13/48)/28)/2,
                           ((8+17/144)/21+(4+7/16)/21)/2,
                           ((9+131/144)/28+(2+13/16)/15)/2)
-               ))
+               ),tolerance=0.0001)
 })
 
 ## Test the function with X supplied as a parameter outside of the region defined in pos
@@ -215,4 +215,25 @@ test_that("Zalpha warns about all NAs", {
 
   expect_warning(Zalpha(pos = df$POS, ws  = 3000, x = as.matrix(df[,3:7]), minRandL = 4, minRL = 50, X = NULL),
                "No Zalpha values were calculated, try reducing minRandL and minRL or increasing the window size")
+})
+
+## test that zalpha works with a missing value
+
+df1<-df
+df1$C1[15]<-NA
+test_that("Zalpha calculates Zalpha statistic correctly with missing value", {
+
+  expect_equal(Zalpha(pos = df1$POS, ws  = 3000, x = as.matrix(df1[,3:7]), minRandL = 4, minRL = 25, X = NULL),
+               list(
+                 position=c(100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500),
+                 Zalpha=c(NA,NA,NA,NA,
+                          0.434953703703704,
+                          0.473283179012346,
+                          0.397114748677249,
+                          0.317791005291005,
+                          0.300801917989418,
+                          0.322897376543210,
+                          0.360532407407407,
+                          NA,NA,NA,NA)
+               ),tolerance=0.0001)
 })
