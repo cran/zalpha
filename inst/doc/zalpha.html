@@ -380,7 +380,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>For this simple example all that is needed is:</p>
 <ul>
 <li><p>The vector of SNP locations</p></li>
-<li><p>The matrix of SNP values. This could be in ACGT format as above, or in 0 and 1 notation, or any other notation as long as SNPs are biallelic. Data extracted from a PLINK .tped file is in the ideal format for this analysis.</p></li>
+<li><p>The matrix of SNP values. This could be in ACGT format as above, or in 0 and 1 notation, or any other notation as long as SNPs are biallelic. Data extracted from a PLINK .tped file is in the ideal format for this analysis. Note the genetic data is phased.</p></li>
 </ul>
 <div id="the-snps-dataset" class="section level3">
 <h3>The snps dataset</h3>
@@ -695,11 +695,11 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb10-4"><a href="#cb10-4"></a><span class="co">#&gt; [16] 1600 1700 1800 1900 2000</span></span>
 <span id="cb10-5"><a href="#cb10-5"></a><span class="co">#&gt; </span></span>
 <span id="cb10-6"><a href="#cb10-6"></a><span class="co">#&gt; $LR</span></span>
-<span id="cb10-7"><a href="#cb10-7"></a><span class="co">#&gt;  [1] NA NA NA NA 60 70 78 84 88 90 90 88 84 78 70 60 NA NA NA NA</span></span>
+<span id="cb10-7"><a href="#cb10-7"></a><span class="co">#&gt;  [1]  0 15 30 45 60 70 78 84 88 90 90 88 84 78 70 60 45 30 15  0</span></span>
 <span id="cb10-8"><a href="#cb10-8"></a><span class="co">#&gt; </span></span>
 <span id="cb10-9"><a href="#cb10-9"></a><span class="co">#&gt; $L_plus_R</span></span>
-<span id="cb10-10"><a href="#cb10-10"></a><span class="co">#&gt;  [1]  NA  NA  NA  NA 111 101  93  87  83  81  81  83  87  93 101 111  NA  NA  NA</span></span>
-<span id="cb10-11"><a href="#cb10-11"></a><span class="co">#&gt; [20]  NA</span></span>
+<span id="cb10-10"><a href="#cb10-10"></a><span class="co">#&gt;  [1] 105 105 106 108 111 101  93  87  83  81  81  83  87  93 101 111 108 106 105</span></span>
+<span id="cb10-11"><a href="#cb10-11"></a><span class="co">#&gt; [20] 105</span></span>
 <span id="cb10-12"><a href="#cb10-12"></a><span class="co">#&gt; </span></span>
 <span id="cb10-13"><a href="#cb10-13"></a><span class="co">#&gt; $Zalpha</span></span>
 <span id="cb10-14"><a href="#cb10-14"></a><span class="co">#&gt;  [1]         NA         NA         NA         NA 0.09893585 0.10944106</span></span>
@@ -744,7 +744,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <li><p><strong>Beta_b</strong> This is the second shape parameter for the Beta distribution fitted to this bin</p></li>
 <li><p><strong>n</strong> This is the number of pairs of SNPs with a genetic distance falling within this bin, whose correlations were used to calculate the statistics.</p></li>
 </ul>
-<p>There is one more optional input parameter - max_dist - which sets the maximum distance SNPs can be apart for calculating for the LD profile. For real world data, Jacobs et al. (2016)[1] recommend using distances up to 2 cM assigned to bins of size 0.0001 cM.</p>
+<p>There is one more optional input parameter - max_dist - which sets the maximum distance SNPs can be apart for calculating for the LD profile. For real world data, Jacobs et al. (2016)[1] recommend using distances up to 2 cM assigned to bins of size 0.0001 cM. Without this parameter, the code will generate bins up to the maximum distance between pairs of SNPs, which is likely to be inefficient as most distances will not be used. max_dist should be big enough to cover the genetic distances between pairs of SNPs within the window size given when the <span class="math inline">\(Z_{\alpha}\)</span> statistics are run. Any pairs with genetic distances bigger than max_dist will be assigned the values in the maximum bin of the LD profile.</p>
 <p>Ideally, we would want to generate an LD profile based on genetic data without selection but exactly matching the other population parameters for our data. This could be done using simulated data (using software such as MSMS[6] or SLiM[7]). We could use another genetic dataset containing a similar population. Alternatively, we could generate an LD profile using the same dataset that we are analysing for selection. Care should be taken that bins are big enough to have a lot of data in so expected r<sup>2</sup> values are not overly affected by outliers.</p>
 <p>Realistically, the user will not have just one chromosome of data for creating the LD profile, but will likely have a whole genome. So far, we have used a vector of genetic distances and a SNP value matrix in our example. However, with multiple chromosomes there will be a vector of genetic distances and a SNP value matrix for each chromosome, and it would be good to use all that information to create the LD profile. Therefore, the function has been written to accept multiple vectors of genetic distances and multiple SNP value matrices via lists.</p>
 <p>The <strong>dist</strong> parameter will accept a vector or a list of vectors.</p>
@@ -775,7 +775,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb12-23"><a href="#cb12-23"></a><span class="co">#&gt; 4 0.003 0.11193736 0.1287972 0.7396069 5.557230  84</span></span>
 <span id="cb12-24"><a href="#cb12-24"></a><span class="co">#&gt; 5 0.004 0.19393939 0.1901561 1.0279480 3.889066  33</span></span></code></pre></div>
 <p>Care should be taken that the chromosomes stay in the same order in each list.</p>
-<p>Congratulations! You should now be able to create your own LD profile and use the Zalpha package.</p>
+<p>Congratulations! You should now be able to create your own LD profile and use the zalpha package.</p>
 </div>
 <div id="references" class="section level2">
 <h2>References</h2>

@@ -59,8 +59,8 @@ test_that("Zalpha_all calculates statistics correctly", {
   expect_equal(Zalpha_all(pos = df$POS, ws  = 3000, x = as.matrix(df[,3:7]), dist = df$dist, LDprofile_bins = LDprofile$bin, LDprofile_rsq = LDprofile$rsq, LDprofile_sd = LDprofile$sd, LDprofile_Beta_a = LDprofile$Beta_a, LDprofile_Beta_b = LDprofile$Beta_b, minRandL = 4, minRL = 25, X = NULL),
                list(
                  position=c(100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500),
-                 LR=c(NA,NA,NA,NA,40,45,48,49,48,45,40,NA,NA,NA,NA),
-                 L_plus_R=c(NA,NA,NA,NA,51,46,43,42,43,46,51,NA,NA,NA,NA),
+                 LR=c(0,13,24,33,40,45,48,49,48,45,40,33,24,13,0),
+                 L_plus_R=c(91,78,67,58,51,46,43,42,43,46,51,58,67,78,91),
                  Zalpha_expected=c(NA,NA,NA,NA,0.390457304338967,0.392014054942343,0.397339546324536,0.398874728980465,0.400715520018796,0.401718327864356,0.399526703832832,NA,NA,NA,NA),
                  Zbeta_expected=c(NA,NA,NA,NA,0.350404001770323,0.357372168444253,0.360647397851440,0.361951221318345,0.362988750761055,0.364752550557575,0.366343120440209,NA,NA,NA,NA),
                  Zalpha=c(NA,NA,NA,NA,((3+1/2)/6+(11+41/144)/45)/2,((6+1/4)/10+(9+41/48)/36)/2,((7+31/72)/15+(7+13/48)/28)/2,((8+17/144)/21+(4+7/16)/21)/2,((9+131/144)/28+(2+13/16)/15)/2,((13+97/144)/36+(1+121/144)/10)/2,((15+25/48)/45+(1+55/144)/6)/2,NA,NA,NA,NA),
@@ -83,8 +83,8 @@ test_that("Zalpha_all calculates the statistics correctly with a different windo
   expect_equal(Zalpha_all(pos = df$POS, ws  = 1100, x = as.matrix(df[,3:7]), dist = df$dist, LDprofile_bins = LDprofile$bin, LDprofile_rsq = LDprofile$rsq, LDprofile_sd = LDprofile$sd, LDprofile_Beta_a = LDprofile$Beta_a, LDprofile_Beta_b = LDprofile$Beta_b, minRandL = 4, minRL = 25, X = NULL),
                list(
                  position=c(100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500),
-                 LR=c(NA,NA,NA,NA,NA,25,25,25,25,25,NA,NA,NA,NA,NA),
-                 L_plus_R=c(NA,NA,NA,NA,NA,20,20,20,20,20,NA,NA,NA,NA,NA),
+                 LR=c(0,5,10,15,20,25,25,25,25,25,20,15,10,5,0),
+                 L_plus_R=c(10,10,11,13,16,20,20,20,20,20,16,13,11,10,10),
                  Zalpha_expected=c(NA,NA,NA,NA,NA,0.397641067838740,0.407771198285253,0.412830128247348,0.419512588688985,0.421536156959405,NA,NA,NA,NA,NA),
                  Zbeta_expected=c(NA,NA,NA,NA,NA,0.369069693255773,0.381250676471648,0.385948372025294,0.388272359451172,0.387629142774876,NA,NA,NA,NA,NA),
                  Zalpha=c(NA,NA,NA,NA,NA,((6+1/4)/10+(2+19/48)/10)/2,((5+5/18)/10+(2+19/48)/10)/2,((2+71/72)/10+(2+19/48)/10)/2,((2+3/16)/10+(2+7/144)/10)/2,((2+3/16)/10+(1+121/144)/10)/2,NA,NA,NA,NA,NA),
@@ -110,8 +110,8 @@ test_that("Zalpha_all calculates all statistics correctly with character matrix"
   expect_equal(Zalpha_all(pos = df$POS, ws  = 3000, x = as.matrix(df1[,3:7]), dist = df$dist, LDprofile_bins = LDprofile$bin, LDprofile_rsq = LDprofile$rsq, LDprofile_sd = LDprofile$sd, LDprofile_Beta_a = LDprofile$Beta_a, LDprofile_Beta_b = LDprofile$Beta_b, minRandL = 4, minRL = 25, X = NULL),
                list(
                  position=c(100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500),
-                 LR=c(NA,NA,NA,NA,40,45,48,49,48,45,40,NA,NA,NA,NA),
-                 L_plus_R=c(NA,NA,NA,NA,51,46,43,42,43,46,51,NA,NA,NA,NA),
+                 LR=c(0,13,24,33,40,45,48,49,48,45,40,33,24,13,0),
+                 L_plus_R=c(91,78,67,58,51,46,43,42,43,46,51,58,67,78,91),
                  Zalpha_expected=c(NA,NA,NA,NA,0.390457304338967,0.392014054942343,0.397339546324536,0.398874728980465,0.400715520018796,0.401718327864356,0.399526703832832,NA,NA,NA,NA),
                  Zbeta_expected=c(NA,NA,NA,NA,0.350404001770323,0.357372168444253,0.360647397851440,0.361951221318345,0.362988750761055,0.364752550557575,0.366343120440209,NA,NA,NA,NA),
                  Zalpha=c(NA,NA,NA,NA,((3+1/2)/6+(11+41/144)/45)/2,((6+1/4)/10+(9+41/48)/36)/2,((7+31/72)/15+(7+13/48)/28)/2,((8+17/144)/21+(4+7/16)/21)/2,((9+131/144)/28+(2+13/16)/15)/2,((13+97/144)/36+(1+121/144)/10)/2,((15+25/48)/45+(1+55/144)/6)/2,NA,NA,NA,NA),
@@ -415,8 +415,8 @@ test_that("Zalpha_all calculates statistics correctly with no optional parameter
   expect_equal(Zalpha_all(pos = df$POS, ws  = 3000),
                list(
                  position=c(100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500),
-                 LR=c(NA,NA,NA,NA,40,45,48,49,48,45,40,NA,NA,NA,NA),
-                 L_plus_R=c(NA,NA,NA,NA,51,46,43,42,43,46,51,NA,NA,NA,NA)
+                 LR=c(0,13,24,33,40,45,48,49,48,45,40,33,24,13,0),
+                 L_plus_R=c(91,78,67,58,51,46,43,42,43,46,51,58,67,78,91)
                ))
 })
 
@@ -427,8 +427,8 @@ test_that("Zalpha_all calculates statistics correctly with only x supplied", {
   expect_equal(Zalpha_all(pos = df$POS, ws  = 3000, x = as.matrix(df[,3:7])),
                list(
                  position=c(100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500),
-                 LR=c(NA,NA,NA,NA,40,45,48,49,48,45,40,NA,NA,NA,NA),
-                 L_plus_R=c(NA,NA,NA,NA,51,46,43,42,43,46,51,NA,NA,NA,NA),
+                 LR=c(0,13,24,33,40,45,48,49,48,45,40,33,24,13,0),
+                 L_plus_R=c(91,78,67,58,51,46,43,42,43,46,51,58,67,78,91),
                  Zalpha=c(NA,NA,NA,NA,((3+1/2)/6+(11+41/144)/45)/2,((6+1/4)/10+(9+41/48)/36)/2,((7+31/72)/15+(7+13/48)/28)/2,((8+17/144)/21+(4+7/16)/21)/2,((9+131/144)/28+(2+13/16)/15)/2,((13+97/144)/36+(1+121/144)/10)/2,((15+25/48)/45+(1+55/144)/6)/2,NA,NA,NA,NA),
                  Zbeta=c(NA,NA,NA,NA,(10+5/18)/40,(10+35/36)/45,(11+103/144)/48,(12+73/144)/49,(11+83/144)/48,(11+17/48)/45,(10+65/144)/40,NA,NA,NA,NA)
                ),tolerance=0.0001)
@@ -441,8 +441,8 @@ test_that("Zalpha_all calculates statistics correctly with dist, LDprofile_bins 
   expect_equal(Zalpha_all(pos = df$POS, ws  = 3000, dist = df$dist, LDprofile_bins = LDprofile$bin, LDprofile_rsq = LDprofile$rsq),
                list(
                  position=c(100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500),
-                 LR=c(NA,NA,NA,NA,40,45,48,49,48,45,40,NA,NA,NA,NA),
-                 L_plus_R=c(NA,NA,NA,NA,51,46,43,42,43,46,51,NA,NA,NA,NA),
+                 LR=c(0,13,24,33,40,45,48,49,48,45,40,33,24,13,0),
+                 L_plus_R=c(91,78,67,58,51,46,43,42,43,46,51,58,67,78,91),
                  Zalpha_expected=c(NA,NA,NA,NA,0.390457304338967,0.392014054942343,0.397339546324536,0.398874728980465,0.400715520018796,0.401718327864356,0.399526703832832,NA,NA,NA,NA),
                  Zbeta_expected=c(NA,NA,NA,NA,0.350404001770323,0.357372168444253,0.360647397851440,0.361951221318345,0.362988750761055,0.364752550557575,0.366343120440209,NA,NA,NA,NA)
                ),tolerance=0.0001)
@@ -455,8 +455,8 @@ test_that("Zalpha_all calculates statistics correctly with x, dist, LDprofile_bi
   expect_equal(Zalpha_all(pos = df$POS, ws  = 3000, x = as.matrix(df[,3:7]), dist = df$dist, LDprofile_bins = LDprofile$bin, LDprofile_rsq = LDprofile$rsq),
                list(
                  position=c(100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500),
-                 LR=c(NA,NA,NA,NA,40,45,48,49,48,45,40,NA,NA,NA,NA),
-                 L_plus_R=c(NA,NA,NA,NA,51,46,43,42,43,46,51,NA,NA,NA,NA),
+                 LR=c(0,13,24,33,40,45,48,49,48,45,40,33,24,13,0),
+                 L_plus_R=c(91,78,67,58,51,46,43,42,43,46,51,58,67,78,91),
                  Zalpha_expected=c(NA,NA,NA,NA,0.390457304338967,0.392014054942343,0.397339546324536,0.398874728980465,0.400715520018796,0.401718327864356,0.399526703832832,NA,NA,NA,NA),
                  Zbeta_expected=c(NA,NA,NA,NA,0.350404001770323,0.357372168444253,0.360647397851440,0.361951221318345,0.362988750761055,0.364752550557575,0.366343120440209,NA,NA,NA,NA),
                  Zalpha=c(NA,NA,NA,NA,((3+1/2)/6+(11+41/144)/45)/2,((6+1/4)/10+(9+41/48)/36)/2,((7+31/72)/15+(7+13/48)/28)/2,((8+17/144)/21+(4+7/16)/21)/2,((9+131/144)/28+(2+13/16)/15)/2,((13+97/144)/36+(1+121/144)/10)/2,((15+25/48)/45+(1+55/144)/6)/2,NA,NA,NA,NA),
@@ -475,8 +475,8 @@ test_that("Zalpha_all calculates statistics correctly with only LDprofile_Beta_a
   expect_equal(Zalpha_all(pos = df$POS, ws  = 3000, x = as.matrix(df[,3:7]), dist = df$dist, LDprofile_bins = LDprofile$bin, LDprofile_rsq = LDprofile$rsq, LDprofile_sd = LDprofile$sd),
                list(
                  position=c(100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500),
-                 LR=c(NA,NA,NA,NA,40,45,48,49,48,45,40,NA,NA,NA,NA),
-                 L_plus_R=c(NA,NA,NA,NA,51,46,43,42,43,46,51,NA,NA,NA,NA),
+                 LR=c(0,13,24,33,40,45,48,49,48,45,40,33,24,13,0),
+                 L_plus_R=c(91,78,67,58,51,46,43,42,43,46,51,58,67,78,91),
                  Zalpha_expected=c(NA,NA,NA,NA,0.390457304338967,0.392014054942343,0.397339546324536,0.398874728980465,0.400715520018796,0.401718327864356,0.399526703832832,NA,NA,NA,NA),
                  Zbeta_expected=c(NA,NA,NA,NA,0.350404001770323,0.357372168444253,0.360647397851440,0.361951221318345,0.362988750761055,0.364752550557575,0.366343120440209,NA,NA,NA,NA),
                  Zalpha=c(NA,NA,NA,NA,((3+1/2)/6+(11+41/144)/45)/2,((6+1/4)/10+(9+41/48)/36)/2,((7+31/72)/15+(7+13/48)/28)/2,((8+17/144)/21+(4+7/16)/21)/2,((9+131/144)/28+(2+13/16)/15)/2,((13+97/144)/36+(1+121/144)/10)/2,((15+25/48)/45+(1+55/144)/6)/2,NA,NA,NA,NA),
@@ -497,8 +497,8 @@ test_that("Zalpha_all calculates statistics correctly with only LDprofile_sd not
   expect_equal(Zalpha_all(pos = df$POS, ws  = 3000, x = as.matrix(df[,3:7]), dist = df$dist, LDprofile_bins = LDprofile$bin, LDprofile_rsq = LDprofile$rsq, LDprofile_Beta_a = LDprofile$Beta_a, LDprofile_Beta_b = LDprofile$Beta_b),
                list(
                  position=c(100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500),
-                 LR=c(NA,NA,NA,NA,40,45,48,49,48,45,40,NA,NA,NA,NA),
-                 L_plus_R=c(NA,NA,NA,NA,51,46,43,42,43,46,51,NA,NA,NA,NA),
+                 LR=c(0,13,24,33,40,45,48,49,48,45,40,33,24,13,0),
+                 L_plus_R=c(91,78,67,58,51,46,43,42,43,46,51,58,67,78,91),
                  Zalpha_expected=c(NA,NA,NA,NA,0.390457304338967,0.392014054942343,0.397339546324536,0.398874728980465,0.400715520018796,0.401718327864356,0.399526703832832,NA,NA,NA,NA),
                  Zbeta_expected=c(NA,NA,NA,NA,0.350404001770323,0.357372168444253,0.360647397851440,0.361951221318345,0.362988750761055,0.364752550557575,0.366343120440209,NA,NA,NA,NA),
                  Zalpha=c(NA,NA,NA,NA,((3+1/2)/6+(11+41/144)/45)/2,((6+1/4)/10+(9+41/48)/36)/2,((7+31/72)/15+(7+13/48)/28)/2,((8+17/144)/21+(4+7/16)/21)/2,((9+131/144)/28+(2+13/16)/15)/2,((13+97/144)/36+(1+121/144)/10)/2,((15+25/48)/45+(1+55/144)/6)/2,NA,NA,NA,NA),
@@ -519,8 +519,8 @@ test_that("Zalpha_all calculates statistics correctly with only x not supplied",
   expect_equal(Zalpha_all(pos = df$POS, ws  = 3000, dist = df$dist, LDprofile_bins = LDprofile$bin, LDprofile_rsq = LDprofile$rsq, LDprofile_sd = LDprofile$sd, LDprofile_Beta_a = LDprofile$Beta_a, LDprofile_Beta_b = LDprofile$Beta_b),
                list(
                  position=c(100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500),
-                 LR=c(NA,NA,NA,NA,40,45,48,49,48,45,40,NA,NA,NA,NA),
-                 L_plus_R=c(NA,NA,NA,NA,51,46,43,42,43,46,51,NA,NA,NA,NA),
+                 LR=c(0,13,24,33,40,45,48,49,48,45,40,33,24,13,0),
+                 L_plus_R=c(91,78,67,58,51,46,43,42,43,46,51,58,67,78,91),
                  Zalpha_expected=c(NA,NA,NA,NA,0.390457304338967,0.392014054942343,0.397339546324536,0.398874728980465,0.400715520018796,0.401718327864356,0.399526703832832,NA,NA,NA,NA),
                  Zbeta_expected=c(NA,NA,NA,NA,0.350404001770323,0.357372168444253,0.360647397851440,0.361951221318345,0.362988750761055,0.364752550557575,0.366343120440209,NA,NA,NA,NA)
                ),tolerance=0.0001)
@@ -533,8 +533,8 @@ test_that("Zalpha_all calculates statistics correctly with dist not supplied", {
   expect_equal(Zalpha_all(pos = df$POS, ws  = 3000, x = as.matrix(df[,3:7]), LDprofile_bins = LDprofile$bin, LDprofile_rsq = LDprofile$rsq, LDprofile_sd = LDprofile$sd, LDprofile_Beta_a = LDprofile$Beta_a, LDprofile_Beta_b = LDprofile$Beta_b),
                list(
                  position=c(100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500),
-                 LR=c(NA,NA,NA,NA,40,45,48,49,48,45,40,NA,NA,NA,NA),
-                 L_plus_R=c(NA,NA,NA,NA,51,46,43,42,43,46,51,NA,NA,NA,NA),
+                 LR=c(0,13,24,33,40,45,48,49,48,45,40,33,24,13,0),
+                 L_plus_R=c(91,78,67,58,51,46,43,42,43,46,51,58,67,78,91),
                  Zalpha=c(NA,NA,NA,NA,((3+1/2)/6+(11+41/144)/45)/2,((6+1/4)/10+(9+41/48)/36)/2,((7+31/72)/15+(7+13/48)/28)/2,((8+17/144)/21+(4+7/16)/21)/2,((9+131/144)/28+(2+13/16)/15)/2,((13+97/144)/36+(1+121/144)/10)/2,((15+25/48)/45+(1+55/144)/6)/2,NA,NA,NA,NA),
                  Zbeta=c(NA,NA,NA,NA,(10+5/18)/40,(10+35/36)/45,(11+103/144)/48,(12+73/144)/49,(11+83/144)/48,(11+17/48)/45,(10+65/144)/40,NA,NA,NA,NA)
                ),tolerance=0.0001)
@@ -547,8 +547,8 @@ test_that("Zalpha_all calculates statistics correctly with LDprofile_bins not su
   expect_equal(Zalpha_all(pos = df$POS, ws  = 3000, x = as.matrix(df[,3:7]), dist = df$dist, LDprofile_rsq = LDprofile$rsq, LDprofile_sd = LDprofile$sd, LDprofile_Beta_a = LDprofile$Beta_a, LDprofile_Beta_b = LDprofile$Beta_b),
                list(
                  position=c(100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500),
-                 LR=c(NA,NA,NA,NA,40,45,48,49,48,45,40,NA,NA,NA,NA),
-                 L_plus_R=c(NA,NA,NA,NA,51,46,43,42,43,46,51,NA,NA,NA,NA),
+                 LR=c(0,13,24,33,40,45,48,49,48,45,40,33,24,13,0),
+                 L_plus_R=c(91,78,67,58,51,46,43,42,43,46,51,58,67,78,91),
                  Zalpha=c(NA,NA,NA,NA,((3+1/2)/6+(11+41/144)/45)/2,((6+1/4)/10+(9+41/48)/36)/2,((7+31/72)/15+(7+13/48)/28)/2,((8+17/144)/21+(4+7/16)/21)/2,((9+131/144)/28+(2+13/16)/15)/2,((13+97/144)/36+(1+121/144)/10)/2,((15+25/48)/45+(1+55/144)/6)/2,NA,NA,NA,NA),
                  Zbeta=c(NA,NA,NA,NA,(10+5/18)/40,(10+35/36)/45,(11+103/144)/48,(12+73/144)/49,(11+83/144)/48,(11+17/48)/45,(10+65/144)/40,NA,NA,NA,NA)
                ),tolerance=0.0001)
@@ -562,9 +562,35 @@ test_that("Zalpha_all calculates statistics correctly with missing value", {
   expect_equal(Zalpha_all(pos = df1$POS, ws  = 3000, x = as.matrix(df1[,3:7])),
                list(
                  position=c(100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500),
-                 LR=c(NA,NA,NA,NA,40,45,48,49,48,45,40,NA,NA,NA,NA),
-                 L_plus_R=c(NA,NA,NA,NA,51,46,43,42,43,46,51,NA,NA,NA,NA),
+                 LR=c(0,13,24,33,40,45,48,49,48,45,40,33,24,13,0),
+                 L_plus_R=c(91,78,67,58,51,46,43,42,43,46,51,58,67,78,91),
                  Zalpha=c(NA,NA,NA,NA,0.434953703703704,0.473283179012346,0.397114748677249,0.317791005291005,0.300801917989418,0.322897376543210,0.360532407407407,NA,NA,NA,NA),
                  Zbeta=c(NA,NA,NA,NA,0.248611111111111,0.235185185185185,0.233651620370370,0.257794784580499,0.250144675925926,0.259413580246914,0.271354166666667,NA,NA,NA,NA)
+               ),tolerance=0.0001)
+})
+
+## test what happens when the biggest bin is bigger than the max_dist in the LDprofile
+
+df1<-df
+df1$dist[10:15]<-df1$dist[10:15]+0.1
+test_that("Zalpha_all calculates statistics correctly when biggest bin is bigger than LDprofile", {
+
+  expect_equal(Zalpha_all(pos = df1$POS, ws  = 3000, x = as.matrix(df1[,3:7]), dist = df1$dist, LDprofile_bins = LDprofile$bin, LDprofile_rsq = LDprofile$rsq, LDprofile_sd = LDprofile$sd, LDprofile_Beta_a = LDprofile$Beta_a, LDprofile_Beta_b = LDprofile$Beta_b, minRandL = 4, minRL = 25, X = NULL),
+               list(
+                 position=c(100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500),
+                 LR=c(0,13,24,33,40,45,48,49,48,45,40,33,24,13,0),
+                 L_plus_R=c(91,78,67,58,51,46,43,42,43,46,51,58,67,78,91),
+                 Zalpha_expected=c(NA, NA, NA, NA, 0.35775270849344, 0.360194100145564, 0.36882454832507, 0.379040922949242, 0.400715520018796, 0.401718327864356, 0.388093039845692, NA, NA, NA, NA),
+                 Zbeta_expected=c(NA, NA, NA, NA, 0.309796639287645, 0.306356600239621, 0.299229117644403, 0.287619092597206, 0.271195118636169, 0.271195118636169, 0.285239698673566, NA, NA, NA, NA),
+                 Zalpha=c(NA, NA, NA, NA, 0.417052469135803, 0.449363425925926, 0.377521494708995, 0.298941798941799, 0.270709325396825, 0.281925154320988, 0.287615740740741, NA, NA, NA, NA),
+                 Zbeta=c(NA, NA, NA, NA, 0.256944444444444, 0.243827160493827, 0.244068287037037, 0.255243764172336, 0.241174768518518, 0.252314814814815, 0.261284722222222, NA, NA, NA, NA),
+                 Zalpha_rsq_over_expected=c(NA, NA, NA, NA, 1.19167472080619, 1.27358283231798, 1.05911709750039, 0.813967663774974, 0.691051112331195, 0.728230393808371, 0.76047497606951, NA, NA, NA, NA),
+                 Zalpha_log_rsq_over_expected=c(NA, NA, NA, NA, -0.0866699301333792, -0.0450984996562888, -0.170082829057599, -0.292011096473854, -0.355497049708911, -0.345346264723395, -0.325460796768333, NA, NA, NA, NA),
+                 Zbeta_rsq_over_expected=c(NA, NA, NA, NA, 0.829165822709247, 0.794411354588777, 0.811051641594364, 0.879635831191311, 0.8893035012259, 0.93038110746129, 0.936927121826222, NA, NA, NA, NA),
+                 Zbeta_log_rsq_over_expected=c(NA, NA, NA, NA, -0.253507645357523, -0.252472151393989, -0.264919235707824, -0.237790197768511, -0.231067956739982, -0.186686780456914, -0.194302291843375, NA, NA, NA, NA),
+                 Zalpha_Zscore=c(NA, NA, NA, NA, 0.171551248775495, 0.250751380960093, 0.0418726269555867, -0.192722802223301, -0.316679396412605, -0.285401890619276, -0.244931914193891, NA, NA, NA, NA),
+                 Zbeta_Zscore=c(NA, NA, NA, NA, -0.155023529432353, -0.185399969976716, -0.168250652582989, -0.104627764295373, -0.0955723675990356, -0.0601070717071691, -0.0618178441622676, NA, NA, NA, NA),
+                 Zalpha_BetaCDF=c(NA, NA, NA, NA, 0.528754272440162, 0.554657151730784, 0.490365350771199, 0.429958093556324, 0.388665184297966, 0.396797658473664, 0.40379809759356, NA, NA, NA, NA),
+                 Zbeta_BetaCDF=c(NA, NA, NA, NA, 0.459559291673423, 0.456100842212321, 0.459910029690557, 0.479549830626744, 0.482519290259401, 0.49506531210108, 0.488097958454476, NA, NA, NA, NA)
                ),tolerance=0.0001)
 })

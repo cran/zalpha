@@ -38,7 +38,7 @@ For this simple example all that is needed is:
 
 * The vector of SNP locations
 
-* The matrix of SNP values. This could be in ACGT format as above, or in 0 and 1 notation, or any other notation as long as SNPs are biallelic. Data extracted from a PLINK .tped file is in the ideal format for this analysis.
+* The matrix of SNP values. This could be in ACGT format as above, or in 0 and 1 notation, or any other notation as long as SNPs are biallelic. Data extracted from a PLINK .tped file is in the ideal format for this analysis. Note the genetic data is phased.
 
 ### The snps dataset
 
@@ -239,7 +239,7 @@ This code has created an LD profile with 6 columns. These are:
 
 * __n__ This is the number of pairs of SNPs with a genetic distance falling within this bin, whose correlations were used to calculate the statistics. 
 
-There is one more optional input parameter - max_dist - which sets the maximum distance SNPs can be apart for calculating for the LD profile. For real world data, Jacobs et al. (2016)[1] recommend using distances up to 2 cM assigned to bins of size 0.0001 cM.
+There is one more optional input parameter - max_dist - which sets the maximum distance SNPs can be apart for calculating for the LD profile. For real world data, Jacobs et al. (2016)[1] recommend using distances up to 2 cM assigned to bins of size 0.0001 cM. Without this parameter, the code will generate bins up to the maximum distance between pairs of SNPs, which is likely to be inefficient as most distances will not be used. max_dist should be big enough to cover the genetic distances between pairs of SNPs within the window size given when the $Z_{\alpha}$ statistics are run. Any pairs with genetic distances bigger than max_dist will be assigned the values in the maximum bin of the LD profile.
 
 Ideally, we would want to generate an LD profile based on genetic data without selection but exactly matching the other population parameters for our data. This could be done using simulated data (using software such as MSMS[6] or SLiM[7]). We could use another genetic dataset containing a similar population. Alternatively, we could generate an LD profile using the same dataset that we are analysing for selection. Care should be taken that bins are big enough to have a lot of data in so expected r^2^ values are not overly affected by outliers. 
 
@@ -274,7 +274,7 @@ create_LDprofile(cM_distances_list,snp_values_list,bin_size = 0.001,beta_params 
 
 Care should be taken that the chromosomes stay in the same order in each list. 
 
-Congratulations! You should now be able to create your own LD profile and use the Zalpha package.
+Congratulations! You should now be able to create your own LD profile and use the zalpha package.
 
 ## References
 
